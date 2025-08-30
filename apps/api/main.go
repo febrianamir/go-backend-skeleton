@@ -37,8 +37,11 @@ func main() {
 
 	serverAddr := fmt.Sprintf("0.0.0.0:%s", config.SERVER_PORT)
 	server := &http.Server{
-		Addr:    serverAddr,
-		Handler: router,
+		Addr:         serverAddr,
+		WriteTimeout: time.Duration(config.SERVER_WRITE_TIMEOUT) * time.Second,
+		ReadTimeout:  time.Duration(config.SERVER_READ_TIMEOUT) * time.Second,
+		IdleTimeout:  time.Duration(config.SERVER_IDLE_TIMEOUT) * time.Second,
+		Handler:      router,
 	}
 
 	quit := make(chan os.Signal, 1)
