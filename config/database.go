@@ -3,6 +3,7 @@ package config
 import (
 	"app/lib"
 	"fmt"
+	"log"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -15,6 +16,7 @@ func (c *Config) NewDB() (*lib.Database, error) {
 		return nil, err
 	}
 
+	log.Println("successfully connected to database")
 	return &lib.Database{DB: db}, nil
 }
 

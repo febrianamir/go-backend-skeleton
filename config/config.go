@@ -3,6 +3,9 @@ package config
 import "os"
 
 type Config struct {
+	// Server Configuration
+	SERVER_PORT string
+
 	// Database Configuration
 	DB_USER     string
 	DB_PASSWORD string
@@ -15,6 +18,7 @@ type Config struct {
 
 func InitConfig() *Config {
 	return &Config{
+		SERVER_PORT: os.Getenv("SERVER_PORT"),
 		DB_USER:     os.Getenv("DB_USER"),
 		DB_PASSWORD: os.Getenv("DB_PASSWORD"),
 		DB_HOST:     os.Getenv("DB_HOST"),

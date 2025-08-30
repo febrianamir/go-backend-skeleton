@@ -10,11 +10,11 @@ type App struct {
 	Usecase *usecase.Usecase
 }
 
-func NewApp(db *lib.Database) App {
+func NewApp(db *lib.Database) *App {
 	repository := repository.NewRepository(db)
 	usecase := usecase.NewUsecase(&repository)
 
-	return App{
+	return &App{
 		Usecase: &usecase,
 	}
 }
