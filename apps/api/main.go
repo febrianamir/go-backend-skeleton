@@ -4,9 +4,14 @@ import (
 	"app"
 	"app/config"
 	"app/handler"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
@@ -35,6 +40,29 @@ func main() {
 		Addr:    serverAddr,
 		Handler: router,
 	}
-	log.Println("server listen at:", serverAddr)
-	server.ListenAndServe()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, os.Interrupt)
+
+	go func() {
+		log.Println("server listen at:", serverAddr)
+		err := server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server failed to start: %v", err)
+		}
+	}()
+
+	<-quit
+	log.Println("shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.SERVER_SHUTDOWN_TIMEOUT)*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("server forced to shutdown: %v", err)
+		if closeErr := server.Close(); closeErr != nil {
+			log.Printf("error closing server: %v", closeErr)
+		}
+	}
+
+	log.Println("server gracefully stopped")
 }
