@@ -1,6 +1,7 @@
 package main
 
 import (
+	"app"
 	"app/config"
 	"log"
 
@@ -17,5 +18,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(db)
+
+	app := app.NewApp(db)
+	log.Println(app)
 }

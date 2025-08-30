@@ -5,10 +5,10 @@ import (
 )
 
 type Usecase struct {
-	repo repository.Repository
+	repo *repository.Repository
 }
 
-func NewUsecase(repo repository.Repository) Usecase {
+func NewUsecase(repo *repository.Repository) Usecase {
 	return Usecase{
 		repo: repo,
 	}
