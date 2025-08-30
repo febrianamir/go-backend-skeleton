@@ -27,13 +27,19 @@ func main() {
 	if err != nil {
 		log.Fatal("failed connected to database: ", err)
 	}
+	mailer := config.NewSMTP()
 
-	app := app.NewApp(db)
+	app := app.NewApp(db, mailer)
 	handler := handler.NewHandler(app)
 	router := chi.NewRouter()
 
 	router.Get("/healthz", handler.Healthz)
-	router.Group(func(r chi.Router) {})
+	router.Group(func(r chi.Router) {
+		// Test
+		r.Route("/test", func(r chi.Router) {
+			r.Post("/send-email", handler.TestSendEmail)
+		})
+	})
 
 	serverAddr := fmt.Sprintf("0.0.0.0:%s", config.SERVER_PORT)
 	server := &http.Server{

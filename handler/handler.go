@@ -52,7 +52,7 @@ type ErrorInfo struct {
 }
 
 func WriteError(ctx context.Context, w http.ResponseWriter, err error) {
-	var resp interface{}
+	var resp any
 	code := http.StatusInternalServerError
 
 	switch errOrig := err.(type) {
@@ -91,7 +91,7 @@ func WriteError(ctx context.Context, w http.ResponseWriter, err error) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-func WriteSuccess(ctx context.Context, w http.ResponseWriter, data interface{}, message string, meta ResponseMeta) {
+func WriteSuccess(ctx context.Context, w http.ResponseWriter, data any, message string, meta ResponseMeta) {
 	resp := SuccessBody{
 		Message: message,
 		Data:    data,

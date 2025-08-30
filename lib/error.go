@@ -19,7 +19,7 @@ func (err CustomError) Error() string {
 var (
 	ErrorInternalServer = CustomError{
 		Message:    "Internal Server Error",
-		Code:       0001,
+		Code:       1000,
 		CodeString: "INTERNAL_SERVER_ERROR",
 		HTTPCode:   http.StatusInternalServerError,
 	}
