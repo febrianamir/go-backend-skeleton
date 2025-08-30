@@ -13,5 +13,9 @@ func init() {
 
 func main() {
 	c := config.InitConfig()
-	log.Println(c)
+	db, err := c.NewDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(db)
 }
