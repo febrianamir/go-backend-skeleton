@@ -28,8 +28,9 @@ func main() {
 		log.Fatal("failed connected to database: ", err)
 	}
 	mailer := config.NewSMTP()
+	storage := config.NewStorage()
 
-	app := app.NewApp(db, mailer)
+	app := app.NewApp(db, mailer, storage)
 	handler := handler.NewHandler(app)
 	router := chi.NewRouter()
 
