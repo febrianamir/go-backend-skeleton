@@ -40,6 +40,11 @@ func main() {
 		r.Route("/test", func(r chi.Router) {
 			r.Post("/send-email", handler.TestSendEmail)
 		})
+
+		// File
+		r.Route("/file", func(r chi.Router) {
+			r.Post("/upload", handler.UploadFile)
+		})
 	})
 
 	serverAddr := fmt.Sprintf("0.0.0.0:%s", config.SERVER_PORT)

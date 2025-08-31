@@ -23,4 +23,10 @@ var (
 		CodeString: "INTERNAL_SERVER_ERROR",
 		HTTPCode:   http.StatusInternalServerError,
 	}
+	ErrorValidation = CustomError{
+		Message:    "Error Validation",
+		Code:       1001,
+		CodeString: "ERROR_VALIDATION",
+		HTTPCode:   http.StatusBadRequest,
+	}
 )
