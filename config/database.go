@@ -10,7 +10,7 @@ import (
 )
 
 func (c *Config) NewDB() (*lib.Database, error) {
-	dsn := c.getPostgresDSN()
+	dsn := c.GetPostgresDSN()
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
@@ -20,7 +20,7 @@ func (c *Config) NewDB() (*lib.Database, error) {
 	return &lib.Database{DB: db}, nil
 }
 
-func (c *Config) getPostgresDSN() string {
+func (c *Config) GetPostgresDSN() string {
 	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
 		c.DB_HOST, c.DB_USER, c.DB_PASSWORD, c.DB_NAME, c.DB_PORT, c.DB_SSLMODE, c.DB_TIMEZONE)
 }
