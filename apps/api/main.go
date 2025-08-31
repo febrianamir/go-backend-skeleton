@@ -25,12 +25,13 @@ func main() {
 	config := config.InitConfig()
 	db, err := config.NewDB()
 	if err != nil {
-		log.Fatal("failed connected to database: ", err)
+		log.Fatal("failed connect to database: ", err)
 	}
 	mailer := config.NewSMTP()
 	storage := config.NewStorage()
+	redis := config.NewRedis()
 
-	app := app.NewApp(db, mailer, storage)
+	app := app.NewApp(db, mailer, storage, redis)
 	handler := handler.NewHandler(app)
 	router := chi.NewRouter()
 

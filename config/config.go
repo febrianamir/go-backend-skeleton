@@ -45,6 +45,11 @@ type Config struct {
 	MINIO_USERNAME string
 	MINIO_PASSWORD string
 	MINIO_SSL      bool
+
+	// Redis Configuration
+	REDIS_HOST     string
+	REDIS_PORT     string
+	REDIS_PASSWORD string
 }
 
 func InitConfig() *Config {
@@ -85,6 +90,9 @@ func InitConfig() *Config {
 		MINIO_USERNAME:             os.Getenv("MINIO_USERNAME"),
 		MINIO_PASSWORD:             os.Getenv("MINIO_PASSWORD"),
 		MINIO_SSL:                  minioSsl,
+		REDIS_HOST:                 os.Getenv("REDIS_HOST"),
+		REDIS_PORT:                 os.Getenv("REDIS_PORT"),
+		REDIS_PASSWORD:             os.Getenv("REDIS_PASSWORD"),
 	}
 }
 

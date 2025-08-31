@@ -12,9 +12,9 @@ type App struct {
 	Usecase *usecase.Usecase
 }
 
-func NewApp(db *lib.Database, mailer *mailer.SMTP, storage storage.Storage) *App {
+func NewApp(db *lib.Database, mailer *mailer.SMTP, storage storage.Storage, redis *lib.Redis) *App {
 	repository := repository.NewRepository(db, mailer)
-	usecase := usecase.NewUsecase(&repository, storage)
+	usecase := usecase.NewUsecase(&repository, storage, redis)
 
 	return &App{
 		Usecase: &usecase,

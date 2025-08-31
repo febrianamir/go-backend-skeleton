@@ -17,6 +17,6 @@ func (c *Config) NewMinioClient() *storage.Minio {
 		log.Fatal("failed connect to minio: ", err)
 	}
 
-	log.Println("successfully connected to minio")
+	log.Println("success connect to minio")
 	return &storage.Minio{Client: client}
 }

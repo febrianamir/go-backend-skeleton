@@ -16,7 +16,7 @@ func (c *Config) NewDB() (*lib.Database, error) {
 		return nil, err
 	}
 
-	log.Println("successfully connected to database")
+	log.Println("success connect to database")
 	return &lib.Database{DB: db}, nil
 }
 

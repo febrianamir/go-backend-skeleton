@@ -19,7 +19,7 @@ func (c *Config) NewAliyunClient() (*storage.Aliyun, error) {
 		return nil, err
 	}
 
-	log.Println("successfully connected to aliyun")
+	log.Println("success connect to aliyun")
 	aliyun := storage.Aliyun{
 		Client:                  client,
 		StorageBucketName:       c.STORAGE_BUCKET_NAME,
