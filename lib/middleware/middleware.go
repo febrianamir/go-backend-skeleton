@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"app/lib"
 	"app/lib/logger"
 	"bytes"
 	"context"
@@ -14,6 +15,40 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
+
+func PanicMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				var errInfo ErrorInfo
+
+				switch err := r.(type) {
+				case error:
+					errInfo.Message = fmt.Sprintf("PANIC: %s", err.Error())
+				default:
+					errInfo.Message = fmt.Sprintf("PANIC: unknown error: %v", err)
+				}
+
+				errInfo.Code = lib.ErrorInternalServer.Code
+				errInfo.CodeString = lib.ErrorInternalServer.CodeString
+				logger.LogError(request.Context(), errInfo.Message, []zap.Field{}...)
+
+				res := ErrorBody{
+					Error: errInfo,
+					Meta: ResponseMeta{
+						HTTPStatus: lib.ErrorInternalServer.HTTPCode,
+					},
+				}
+
+				writer.WriteHeader(lib.ErrorInternalServer.HTTPCode)
+				responseBody, _ := json.Marshal(res)
+				_, _ = writer.Write(responseBody)
+			}
+		}()
+
+		next.ServeHTTP(writer, request)
+	})
+}
 
 func InstrumentMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -52,7 +87,7 @@ func InstrumentMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(request.Context(), logger.CtxRequestID, reqID)
-		m := httpsnoop.CaptureMetrics(next, writer, request.WithContext(ctx))
+		m := httpsnoop.CaptureMetrics(PanicMiddleware(next), writer, request.WithContext(ctx))
 
 		logger.LogInfo(ctx, fmt.Sprintf("http handler ([%s] - %s) completed", request.Method, request.URL.Path), []zap.Field{
 			zap.Int("status_code", m.Code),
