@@ -3,10 +3,13 @@ package handler
 import (
 	"app"
 	"app/lib"
+	"app/lib/logger"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 type Handler struct {
@@ -73,6 +76,13 @@ func WriteError(ctx context.Context, w http.ResponseWriter, err error) {
 			},
 		}
 		code = errOrig.HTTPCode
+		logger.LogError(ctx, "error response", []zap.Field{
+			zap.Error(err),
+			zap.Int("code", errOrig.Code),
+			zap.String("code_string", errOrig.CodeString),
+			zap.Any("err_details", errOrig.ErrDetails),
+			zap.Int("http_code", errOrig.Code),
+		}...)
 	default:
 		resp = ErrorBody{
 			Error: ErrorInfo{
@@ -84,6 +94,12 @@ func WriteError(ctx context.Context, w http.ResponseWriter, err error) {
 				HTTPStatus: lib.ErrorInternalServer.HTTPCode,
 			},
 		}
+		logger.LogError(ctx, "internal server error response", []zap.Field{
+			zap.Error(err),
+			zap.Int("code", lib.ErrorInternalServer.Code),
+			zap.String("code_string", lib.ErrorInternalServer.CodeString),
+			zap.Int("http_code", lib.ErrorInternalServer.HTTPCode),
+		}...)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

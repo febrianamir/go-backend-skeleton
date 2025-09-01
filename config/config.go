@@ -7,6 +7,9 @@ import (
 )
 
 type Config struct {
+	// Environment Configuration
+	ENV string
+
 	// Server Configuration
 	SERVER_PORT             string
 	SERVER_WRITE_TIMEOUT    int // In seconds
@@ -50,6 +53,9 @@ type Config struct {
 	REDIS_HOST     string
 	REDIS_PORT     string
 	REDIS_PASSWORD string
+
+	// Logging Configuration
+	LOG_PATH string
 }
 
 func InitConfig() *Config {
@@ -61,6 +67,7 @@ func InitConfig() *Config {
 	minioSsl := parseBoolConfig("MINIO_SSL")
 
 	return &Config{
+		ENV:                        os.Getenv("ENV"),
 		SERVER_PORT:                os.Getenv("SERVER_PORT"),
 		SERVER_WRITE_TIMEOUT:       serverWriteTimeout,
 		SERVER_READ_TIMEOUT:        serverReadTimeout,
@@ -93,6 +100,7 @@ func InitConfig() *Config {
 		REDIS_HOST:                 os.Getenv("REDIS_HOST"),
 		REDIS_PORT:                 os.Getenv("REDIS_PORT"),
 		REDIS_PASSWORD:             os.Getenv("REDIS_PASSWORD"),
+		LOG_PATH:                   os.Getenv("LOG_PATH"),
 	}
 }
 

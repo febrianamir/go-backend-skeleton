@@ -17,19 +17,22 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var cfg *config.Config
+
 func init() {
 	godotenv.Load()
+	cfg = config.InitConfig()
+	cfg.NewLogger()
 }
 
 func main() {
-	config := config.InitConfig()
-	db, err := config.NewDB()
+	db, err := cfg.NewDB()
 	if err != nil {
 		log.Fatal("failed connect to database: ", err)
 	}
-	mailer := config.NewSMTP()
-	storage := config.NewStorage()
-	redis := config.NewRedis()
+	mailer := cfg.NewSMTP()
+	storage := cfg.NewStorage()
+	redis := cfg.NewRedis()
 
 	app := app.NewApp(db, mailer, storage, redis)
 	handler := handler.NewHandler(app)
@@ -48,12 +51,12 @@ func main() {
 		})
 	})
 
-	serverAddr := fmt.Sprintf("0.0.0.0:%s", config.SERVER_PORT)
+	serverAddr := fmt.Sprintf("0.0.0.0:%s", cfg.SERVER_PORT)
 	server := &http.Server{
 		Addr:         serverAddr,
-		WriteTimeout: time.Duration(config.SERVER_WRITE_TIMEOUT) * time.Second,
-		ReadTimeout:  time.Duration(config.SERVER_READ_TIMEOUT) * time.Second,
-		IdleTimeout:  time.Duration(config.SERVER_IDLE_TIMEOUT) * time.Second,
+		WriteTimeout: time.Duration(cfg.SERVER_WRITE_TIMEOUT) * time.Second,
+		ReadTimeout:  time.Duration(cfg.SERVER_READ_TIMEOUT) * time.Second,
+		IdleTimeout:  time.Duration(cfg.SERVER_IDLE_TIMEOUT) * time.Second,
 		Handler:      router,
 	}
 
@@ -70,7 +73,7 @@ func main() {
 
 	<-quit
 	log.Println("shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.SERVER_SHUTDOWN_TIMEOUT)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.SERVER_SHUTDOWN_TIMEOUT)*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
