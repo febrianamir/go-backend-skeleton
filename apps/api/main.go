@@ -4,7 +4,6 @@ import (
 	"app"
 	"app/config"
 	"app/handler"
-	"app/lib/middleware"
 	"context"
 	"fmt"
 	"log"
@@ -45,7 +44,7 @@ func main() {
 
 	router.Get("/healthz", handler.Healthz)
 	router.Group(func(r chi.Router) {
-		r.Use(middleware.InstrumentMiddleware)
+		r.Use(handler.InstrumentMiddleware)
 
 		// Test
 		r.Route("/test", func(r chi.Router) {

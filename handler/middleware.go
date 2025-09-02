@@ -1,4 +1,4 @@
-package middleware
+package handler
 
 import (
 	"app/lib"
@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func PanicMiddleware(next http.Handler) http.Handler {
+func (handler *Handler) PanicMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
@@ -50,7 +50,7 @@ func PanicMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func InstrumentMiddleware(next http.Handler) http.Handler {
+func (handler *Handler) InstrumentMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		var reqBodyJson string
 		var reqBodyForm string
@@ -87,7 +87,7 @@ func InstrumentMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(request.Context(), logger.CtxRequestID, reqID)
-		m := httpsnoop.CaptureMetrics(PanicMiddleware(next), writer, request.WithContext(ctx))
+		m := httpsnoop.CaptureMetrics(handler.PanicMiddleware(next), writer, request.WithContext(ctx))
 
 		logger.LogInfo(ctx, fmt.Sprintf("http handler ([%s] - %s) completed", request.Method, request.URL.Path), []zap.Field{
 			zap.Int("status_code", m.Code),
