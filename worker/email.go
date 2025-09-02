@@ -5,12 +5,15 @@ import (
 	"app/request"
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/hibiken/asynq"
 	"go.uber.org/zap"
 )
 
 func (w *Worker) WorkerSendEmail(ctx context.Context, t *asynq.Task) error {
+	defer recoverWorkerPanic(ctx, t)
+
 	var p request.SendEmailPayload
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		logger.LogError(ctx, "json unmarshal error", []zap.Field{
@@ -36,4 +39,20 @@ func (w *Worker) WorkerSendEmail(ctx context.Context, t *asynq.Task) error {
 		zap.Strings("tags", []string{"worker", "WorkerSendEmail"}),
 	}...)
 	return nil
+}
+
+func recoverWorkerPanic(ctx context.Context, t *asynq.Task) {
+	if r := recover(); r != nil {
+		var errorMsg string
+		switch err := r.(type) {
+		case error:
+			errorMsg = fmt.Sprintf("PANIC: %s", err.Error())
+		default:
+			errorMsg = fmt.Sprintf("PANIC: unknown error: %v", err)
+		}
+		logger.LogError(ctx, errorMsg, []zap.Field{
+			zap.String("task_id", t.ResultWriter().TaskID()),
+			zap.Strings("tags", []string{"worker", "WorkerSendEmail"}),
+		}...)
+	}
 }
