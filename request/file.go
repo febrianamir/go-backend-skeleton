@@ -42,33 +42,17 @@ func ParseFile(r *http.Request, field string, maxFileSize int64, allowedExtensio
 		return fd, err
 	}
 
-	// Validate file size
-	size := fh.Size / 1024 / 1024 // In MB
-	if size > maxFileSize {
-		customErr := lib.ErrorValidation
-		customErr.ErrDetails = map[string]any{
-			"file": fmt.Sprintf("File too large. Max %d MB.", maxFileSize),
-		}
-		return fd, customErr
+	if err := validateFileSize(f, fh.Size, maxFileSize); err != nil {
+		return fd, err
 	}
 
-	// Validate extension
-	fExt := filepath.Ext(fh.Filename)
-	fExt = strings.ReplaceAll(fExt, ".", "")
-	fExt = strings.ToLower(fExt)
-	if len(allowedExtensions) > 0 {
-		if !validFileExtension(fExt, allowedExtensions) && fExt != "" {
-			customErr := lib.ErrorValidation
-			customErr.ErrDetails = map[string]any{
-				"file": fmt.Sprintf("Invalid file extension. Allowed extensions: %s.", strings.Join(allowedExtensions, ", ")),
-			}
-			return fd, customErr
-		}
+	if err := validateFileExtension(f, fh.Filename, allowedExtensions); err != nil {
+		return fd, err
 	}
 
 	fd.File = f
 	fd.FileHeader = fh
-	fd.FileExtension = fExt
+	fd.FileExtension = extractFileExt(fh.Filename)
 	fd.Filename = fh.Filename
 	fd.FileContentType = fh.Header.Get("Content-Type")
 	return fd, nil
@@ -96,33 +80,18 @@ func ParseFiles(r *http.Request, field string, maxFileSize int64, allowedExtensi
 			return nil, err
 		}
 
-		size := float64(fh.Size) / 1024 / 1024 // In MB
-		if size > float64(maxFileSize) {
-			f.Close()
-			customErr := lib.ErrorValidation
-			customErr.ErrDetails = map[string]any{
-				"file": fmt.Sprintf("File too large. Max %d MB.", maxFileSize),
-			}
-			return nil, customErr
+		if err := validateFileSize(f, fh.Size, maxFileSize); err != nil {
+			return nil, err
 		}
 
-		fExt := filepath.Ext(fh.Filename)
-		fExt = strings.ToLower(strings.TrimPrefix(fExt, "."))
-		if len(allowedExtensions) > 0 {
-			if !validFileExtension(fExt, allowedExtensions) && fExt != "" {
-				f.Close()
-				customErr := lib.ErrorValidation
-				customErr.ErrDetails = map[string]any{
-					"file": fmt.Sprintf("Invalid file extension. Allowed extensions: %s.", strings.Join(allowedExtensions, ", ")),
-				}
-				return nil, customErr
-			}
+		if err := validateFileExtension(f, fh.Filename, allowedExtensions); err != nil {
+			return nil, err
 		}
 
 		fd := FileData{
 			File:            f,
 			FileHeader:      fh,
-			FileExtension:   fExt,
+			FileExtension:   extractFileExt(fh.Filename),
 			Filename:        fh.Filename,
 			FileContentType: fh.Header.Get("Content-Type"),
 		}
@@ -132,6 +101,35 @@ func ParseFiles(r *http.Request, field string, maxFileSize int64, allowedExtensi
 	return files, nil
 }
 
-func validFileExtension(ext string, extensions []string) bool {
-	return slices.Contains(extensions, ext)
+func validateFileExtension(f multipart.File, filename string, allowedExtensions []string) error {
+	fExt := extractFileExt(filename)
+	if len(allowedExtensions) > 0 {
+		if !slices.Contains(allowedExtensions, fExt) && fExt != "" {
+			f.Close()
+			customErr := lib.ErrorValidation
+			customErr.ErrDetails = map[string]any{
+				"file": fmt.Sprintf("Invalid file extension. Allowed extensions: %s.", strings.Join(allowedExtensions, ", ")),
+			}
+			return customErr
+		}
+	}
+	return nil
+}
+
+func validateFileSize(f multipart.File, sizeMB, maxFileSize int64) error {
+	size := sizeMB / 1024 / 1024 // In MB
+	if size > maxFileSize {
+		f.Close()
+		customErr := lib.ErrorValidation
+		customErr.ErrDetails = map[string]any{
+			"file": fmt.Sprintf("File too large. Max %d MB.", maxFileSize),
+		}
+		return customErr
+	}
+	return nil
+}
+
+func extractFileExt(filename string) string {
+	fExt := filepath.Ext(filename)
+	return strings.ToLower(strings.TrimPrefix(fExt, "."))
 }
