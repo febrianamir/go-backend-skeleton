@@ -1,13 +1,13 @@
 package usecase
 
 import (
-	"app/lib/mailer"
+	"app/lib/constant"
 	"app/request"
 	"context"
 )
 
 func (usecase *Usecase) TestSendEmail(ctx context.Context, req request.TestSendEmail) error {
-	err := usecase.repo.SendMailWithTemplate(ctx, mailer.SendMailWithTemplateParam{
+	return usecase.repo.PublishTask(ctx, constant.TaskTypeEmailSend, request.SendEmailPayload{
 		To:           []string{req.Email},
 		TemplateName: "test_email.html",
 		TemplateData: map[string]any{
@@ -15,9 +15,4 @@ func (usecase *Usecase) TestSendEmail(ctx context.Context, req request.TestSendE
 		},
 		Subject: "Test Send Email",
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

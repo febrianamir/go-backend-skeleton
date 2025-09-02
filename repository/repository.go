@@ -3,20 +3,23 @@ package repository
 import (
 	"app/lib"
 	"app/lib/mailer"
+	"app/lib/task"
 	"context"
 )
 
 type TrxKey struct{}
 
 type Repository struct {
-	db     *lib.Database
-	mailer *mailer.SMTP
+	db        *lib.Database
+	mailer    *mailer.SMTP
+	publisher *task.Publisher
 }
 
-func NewRepository(db *lib.Database, mailer *mailer.SMTP) Repository {
+func NewRepository(db *lib.Database, mailer *mailer.SMTP, publisher *task.Publisher) Repository {
 	return Repository{
-		db:     db,
-		mailer: mailer,
+		db:        db,
+		mailer:    mailer,
+		publisher: publisher,
 	}
 }
 
