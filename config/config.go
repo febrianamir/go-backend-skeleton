@@ -8,7 +8,8 @@ import (
 
 type Config struct {
 	// Environment Configuration
-	ENV string
+	ENV        string
+	DEBUG_MODE bool
 
 	// Server Configuration
 	SERVER_PORT             string
@@ -59,6 +60,7 @@ type Config struct {
 }
 
 func InitConfig() *Config {
+	debugMode := parseBoolConfig("DEBUG_MODE")
 	serverWriteTimeout := parseIntConfig("SERVER_WRITE_TIMEOUT", 30)
 	serverReadTimeout := parseIntConfig("SERVER_READ_TIMEOUT", 30)
 	serverIdleTimeout := parseIntConfig("SERVER_IDLE_TIMEOUT", 30)
@@ -68,6 +70,7 @@ func InitConfig() *Config {
 
 	return &Config{
 		ENV:                        os.Getenv("ENV"),
+		DEBUG_MODE:                 debugMode,
 		SERVER_PORT:                os.Getenv("SERVER_PORT"),
 		SERVER_WRITE_TIMEOUT:       serverWriteTimeout,
 		SERVER_READ_TIMEOUT:        serverReadTimeout,

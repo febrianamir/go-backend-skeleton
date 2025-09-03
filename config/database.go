@@ -10,8 +10,12 @@ import (
 )
 
 func (c *Config) NewDB() (*lib.Database, error) {
+	sqlLogger := c.NewSQLLogger()
+
 	dsn := c.GetPostgresDSN()
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: sqlLogger,
+	})
 	if err != nil {
 		return nil, err
 	}
