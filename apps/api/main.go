@@ -47,13 +47,22 @@ func main() {
 		r.Use(handler.InstrumentMiddleware)
 
 		// Test
-		r.Route("/test", func(r chi.Router) {
+		r.Route("/tests", func(r chi.Router) {
 			r.Post("/send-email", handler.TestSendEmail)
 		})
 
 		// File
-		r.Route("/file", func(r chi.Router) {
+		r.Route("/files", func(r chi.Router) {
 			r.Post("/upload", handler.UploadFile)
+		})
+
+		// User
+		r.Route("/users", func(r chi.Router) {
+			r.Get("/", handler.GetUsers)
+			r.Post("/", handler.CreateUser)
+			r.Get("/{ID}", handler.GetUser)
+			r.Put("/{ID}", handler.UpdateUser)
+			r.Delete("/{ID}", handler.DeleteUser)
 		})
 	})
 

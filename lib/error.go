@@ -29,4 +29,22 @@ var (
 		CodeString: "ERROR_VALIDATION",
 		HTTPCode:   http.StatusBadRequest,
 	}
+	ErrorParseQuery = CustomError{
+		Message:    "Error Parse Query",
+		Code:       1002,
+		CodeString: "ERROR_PARSE_QUERY",
+		HTTPCode:   http.StatusBadRequest,
+	}
+	ErrorParseParam = CustomError{
+		Message:    "Error Parse Param",
+		Code:       1003,
+		CodeString: "ERROR_PARSE_PARAM",
+		HTTPCode:   http.StatusBadRequest,
+	}
+	ErrorNotFound = CustomError{
+		Message:    "Error Not Found",
+		Code:       1004,
+		CodeString: "ERROR_NOT_FOUND",
+		HTTPCode:   http.StatusNotFound,
+	}
 )
