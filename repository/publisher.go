@@ -31,7 +31,7 @@ func (repo *Repository) PublishTask(ctx context.Context, taskType string, payloa
 	}
 
 	logger.LogInfo(ctx, "success publish task", []zap.Field{
-		zap.String("task_id", taskInfo.ID),
+		zap.String("process_id", taskInfo.ID),
 		zap.String("task_queue", taskInfo.Queue),
 		zap.Any("payload", payload),
 		zap.Strings("tags", []string{"repository", "PublishTask"}),

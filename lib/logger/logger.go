@@ -9,13 +9,13 @@ import (
 	"os"
 	"time"
 
-	logger "gitlab.com/erloom-dot-id/go/echo-go-logger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const CtxRequestID string = "X-Request-ID"
+const CtxProcessID string = "X-Process-ID"
 
 var instance *zap.Logger
 var env = ""
@@ -48,8 +48,11 @@ func Init(setup LoggerSetup) {
 }
 
 func CommonLog(ctx context.Context, level, message string, fields ...zap.Field) {
-	if reqID, ok := ctx.Value(logger.CtxRequestID).(string); ok {
+	if reqID, ok := ctx.Value(CtxRequestID).(string); ok {
 		fields = append(fields, zap.String("request_id", reqID))
+	}
+	if reqID, ok := ctx.Value(CtxProcessID).(string); ok {
+		fields = append(fields, zap.String("process_id", reqID))
 	}
 	switch level {
 	case "info":
@@ -83,7 +86,7 @@ func writeMessageLog(level string, message string, fields []zap.Field) {
 }
 
 func TrafficLogInfo(ctx context.Context, message string, fields ...zap.Field) {
-	if reqID, ok := ctx.Value(logger.CtxRequestID).(string); ok {
+	if reqID, ok := ctx.Value(CtxRequestID).(string); ok {
 		fields = append(fields, zap.String("request_id", reqID))
 	}
 	fields = append(fields, zap.String("tag", "traffic-log"))

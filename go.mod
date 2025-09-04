@@ -14,7 +14,6 @@ require (
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/redis/go-redis/v9 v9.12.1
 	github.com/rubenv/sql-migrate v1.8.0
-	gitlab.com/erloom-dot-id/go/echo-go-logger v1.5.1
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.39.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df

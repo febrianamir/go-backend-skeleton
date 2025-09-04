@@ -12,22 +12,22 @@ import (
 )
 
 func (w *Worker) WorkerSendEmail(ctx context.Context, t *asynq.Task) error {
-	defer recoverWorkerPanic(ctx, t)
+	ctx = context.WithValue(ctx, logger.CtxProcessID, t.ResultWriter().TaskID())
+	defer recoverWorkerPanic(ctx)
+
+	logger.LogInfo(ctx, "start process task", []zap.Field{
+		zap.Any("payload", string(t.Payload())),
+		zap.Strings("tags", []string{"worker", "WorkerSendEmail"}),
+	}...)
 
 	var p request.SendEmailPayload
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		logger.LogError(ctx, "json unmarshal error", []zap.Field{
 			zap.Error(err),
-			zap.String("task_id", t.ResultWriter().TaskID()),
 			zap.Strings("tags", []string{"worker", "WorkerSendEmail"}),
 		}...)
 		return err
 	}
-	logger.LogInfo(ctx, "start process task", []zap.Field{
-		zap.String("task_id", t.ResultWriter().TaskID()),
-		zap.Any("payload", p),
-		zap.Strings("tags", []string{"worker", "WorkerSendEmail"}),
-	}...)
 
 	err := w.App.Usecase.SendEmail(ctx, p)
 	if err != nil {
@@ -35,13 +35,12 @@ func (w *Worker) WorkerSendEmail(ctx context.Context, t *asynq.Task) error {
 	}
 
 	logger.LogInfo(ctx, "success process task", []zap.Field{
-		zap.String("task_id", t.ResultWriter().TaskID()),
 		zap.Strings("tags", []string{"worker", "WorkerSendEmail"}),
 	}...)
 	return nil
 }
 
-func recoverWorkerPanic(ctx context.Context, t *asynq.Task) {
+func recoverWorkerPanic(ctx context.Context) {
 	if r := recover(); r != nil {
 		var errorMsg string
 		switch err := r.(type) {
@@ -51,7 +50,6 @@ func recoverWorkerPanic(ctx context.Context, t *asynq.Task) {
 			errorMsg = fmt.Sprintf("PANIC: unknown error: %v", err)
 		}
 		logger.LogError(ctx, errorMsg, []zap.Field{
-			zap.String("task_id", t.ResultWriter().TaskID()),
 			zap.Strings("tags", []string{"worker", "WorkerSendEmail"}),
 		}...)
 	}
