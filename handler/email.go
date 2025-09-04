@@ -17,7 +17,13 @@ func (handler *Handler) TestSendEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.App.Usecase.TestSendEmail(context.Background(), req)
+	err = req.Validate()
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	err = handler.App.Usecase.TestSendEmail(ctx, req)
 	if err != nil {
 		WriteError(ctx, w, err)
 		return

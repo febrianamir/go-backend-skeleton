@@ -65,6 +65,12 @@ func (handler *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = req.Validate()
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
 	err = handler.App.Usecase.CreateUser(ctx, req)
 	if err != nil {
 		WriteError(ctx, w, err)
@@ -79,6 +85,12 @@ func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	req := request.UpdateUser{}
 	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	err = req.Validate()
 	if err != nil {
 		WriteError(ctx, w, err)
 		return

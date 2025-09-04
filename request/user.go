@@ -1,5 +1,10 @@
 package request
 
+import (
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
+)
+
 type GetUsers struct {
 	BasePaginateRequest
 	Preloads []string
@@ -29,11 +34,32 @@ type CreateUser struct {
 	Password    string `json:"password"`
 }
 
+func (r *CreateUser) Validate() error {
+	validationErrDetails := map[string]any{}
+
+	validateField(r.Name, "name", validationErrDetails, validation.Required)
+	validateField(r.Email, "email", validationErrDetails, validation.Required, is.EmailFormat)
+	validateField(r.PhoneNumber, "phone_number", validationErrDetails, validation.Required)
+	validateField(r.Name, "password", validationErrDetails, IsPassword...)
+
+	return buildValidationError(validationErrDetails)
+}
+
 type UpdateUser struct {
 	ID          uint
 	Name        string `json:"name"`
 	Email       string `json:"email"`
 	PhoneNumber string `json:"phone_number"`
+}
+
+func (r *UpdateUser) Validate() error {
+	validationErrDetails := map[string]any{}
+
+	validateField(r.Name, "name", validationErrDetails, validation.Required)
+	validateField(r.Email, "email", validationErrDetails, validation.Required, is.EmailFormat)
+	validateField(r.PhoneNumber, "phone_number", validationErrDetails, validation.Required)
+
+	return buildValidationError(validationErrDetails)
 }
 
 type DeleteUser struct {
