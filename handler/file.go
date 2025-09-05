@@ -3,13 +3,12 @@ package handler
 import (
 	"app/lib/constant"
 	"app/request"
-	"context"
 	"net/http"
 	"strings"
 )
 
 func (handler *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 
 	req := request.UploadFile{}
 	targetPath := strings.ToLower(r.FormValue("path"))

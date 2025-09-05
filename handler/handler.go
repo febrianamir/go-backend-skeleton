@@ -4,6 +4,7 @@ import (
 	"app"
 	"app/lib"
 	"app/lib/logger"
+	"app/request"
 	"app/response"
 	"context"
 	"encoding/csv"
@@ -261,4 +262,18 @@ func getParamUint(r *http.Request, key string) (uint, error) {
 		return 0, parseParamError
 	}
 	return uint(value), nil
+}
+
+func decodeAndValidateRequest[T request.Validator](r *http.Request, req T) error {
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		return err
+	}
+
+	err = req.Validate()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

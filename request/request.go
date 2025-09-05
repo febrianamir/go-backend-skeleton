@@ -9,6 +9,10 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+type Validator interface {
+	Validate() error
+}
+
 type BasePaginateRequest struct {
 	Sort   []string `json:"sort"`
 	Search string   `json:"search"`

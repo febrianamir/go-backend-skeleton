@@ -2,7 +2,6 @@ package handler
 
 import (
 	"app/request"
-	"encoding/json"
 	"net/http"
 )
 
@@ -37,8 +36,8 @@ func (handler *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
 
 func (handler *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := request.GetUser{}
 
+	req := request.GetUser{}
 	id, err := getParamUint(r, "ID")
 	if err != nil {
 		WriteError(ctx, w, err)
@@ -57,15 +56,9 @@ func (handler *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 func (handler *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
 	req := request.CreateUser{}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		WriteError(ctx, w, err)
-		return
-	}
-
-	err = req.Validate()
+	err := decodeAndValidateRequest(r, &req)
 	if err != nil {
 		WriteError(ctx, w, err)
 		return
@@ -84,13 +77,7 @@ func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	req := request.UpdateUser{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		WriteError(ctx, w, err)
-		return
-	}
-
-	err = req.Validate()
+	err := decodeAndValidateRequest(r, &req)
 	if err != nil {
 		WriteError(ctx, w, err)
 		return
@@ -114,8 +101,8 @@ func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 func (handler *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := request.DeleteUser{}
 
+	req := request.DeleteUser{}
 	id, err := getParamUint(r, "ID")
 	if err != nil {
 		WriteError(ctx, w, err)
