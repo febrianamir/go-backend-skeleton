@@ -56,6 +56,11 @@ func main() {
 			r.Post("/upload", handler.UploadFile)
 		})
 
+		// Auth
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", handler.Register)
+		})
+
 		// User
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", handler.GetUsers)

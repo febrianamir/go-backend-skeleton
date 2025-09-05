@@ -40,7 +40,7 @@ func (r *CreateUser) Validate() error {
 	validateField(r.Name, "name", validationErrDetails, validation.Required)
 	validateField(r.Email, "email", validationErrDetails, validation.Required, is.EmailFormat)
 	validateField(r.PhoneNumber, "phone_number", validationErrDetails, validation.Required)
-	validateField(r.Name, "password", validationErrDetails, IsPassword...)
+	validateField(r.Password, "password", validationErrDetails, IsPassword...)
 
 	return buildValidationError(validationErrDetails)
 }
