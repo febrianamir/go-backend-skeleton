@@ -47,4 +47,10 @@ var (
 		CodeString: "ERROR_NOT_FOUND",
 		HTTPCode:   http.StatusNotFound,
 	}
+	ErrorParseRequest = CustomError{
+		Message:    "Error Parse Request",
+		Code:       1004,
+		CodeString: "ERROR_PARSE_REQUEST",
+		HTTPCode:   http.StatusBadRequest,
+	}
 )

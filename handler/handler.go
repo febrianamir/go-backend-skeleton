@@ -267,7 +267,9 @@ func getParamUint(r *http.Request, key string) (uint, error) {
 func decodeAndValidateRequest[T request.Validator](r *http.Request, req T) error {
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		return err
+		parseRequestError := lib.ErrorParseRequest
+		parseRequestError.Message = err.Error()
+		return parseRequestError
 	}
 
 	err = req.Validate()
