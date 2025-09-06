@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"app/lib"
 	"app/lib/storage"
 	"app/repository"
 )
@@ -9,13 +8,11 @@ import (
 type Usecase struct {
 	repo    *repository.Repository
 	storage storage.Storage
-	redis   *lib.Redis
 }
 
-func NewUsecase(repo *repository.Repository, storage storage.Storage, redis *lib.Redis) Usecase {
+func NewUsecase(repo *repository.Repository, storage storage.Storage) Usecase {
 	return Usecase{
 		repo:    repo,
 		storage: storage,
-		redis:   redis,
 	}
 }

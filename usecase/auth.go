@@ -65,7 +65,7 @@ func (usecase *Usecase) Register(ctx context.Context, req request.Register) (err
 			return err
 		}
 
-		return usecase.repo.PublishTask(ctx, constant.TaskTypeEmailSend, request.SendEmailPayload{
+		err = usecase.repo.PublishTask(ctx, constant.TaskTypeEmailSend, request.SendEmailPayload{
 			To:           []string{user.Email},
 			TemplateName: "register_verification.html",
 			TemplateData: map[string]any{
@@ -73,5 +73,62 @@ func (usecase *Usecase) Register(ctx context.Context, req request.Register) (err
 			},
 			Subject: "Register Verification",
 		})
+		if err != nil {
+			return err
+		}
+
+		return usecase.repo.SetVerificationDelayCache(ctx, user.ID, model.UserVerificationTypeVerifyAccount)
+	})
+}
+
+func (usecase *Usecase) RegisterResendVerification(ctx context.Context, req request.RegisterResendVerification) (err error) {
+	user, err := usecase.repo.GetUser(ctx, request.GetUser{
+		Email: req.Email,
+	})
+	if err != nil {
+		return err
+	}
+	if user.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Not Found"
+		return notFoundError
+	}
+
+	verificationDelayCache, remainingTtl, err := usecase.repo.GetVerificationDelayCacheWithTtl(ctx, user.ID, model.UserVerificationTypeVerifyAccount)
+	if err != nil {
+		return err
+	}
+	if verificationDelayCache != "" {
+		verificationDelayError := lib.ErrorVerificationDelay
+		verificationDelayError.ErrDetails = map[string]any{
+			"remaining_ttl": remainingTtl / time.Second,
+		}
+		return verificationDelayError
+	}
+
+	userVerification, err := usecase.repo.GetUserVerification(ctx, request.GetUserVerification{})
+	if err != nil {
+		return err
+	}
+	if userVerification.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Verification Not Found"
+		return notFoundError
+	}
+
+	return usecase.repo.Transaction(ctx, func(ctx context.Context) error {
+		err = usecase.repo.PublishTask(ctx, constant.TaskTypeEmailSend, request.SendEmailPayload{
+			To:           []string{user.Email},
+			TemplateName: "register_verification.html",
+			TemplateData: map[string]any{
+				"code": userVerification.Code,
+			},
+			Subject: "Register Verification",
+		})
+		if err != nil {
+			return err
+		}
+
+		return usecase.repo.SetVerificationDelayCache(ctx, user.ID, model.UserVerificationTypeVerifyAccount)
 	})
 }

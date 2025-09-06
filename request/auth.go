@@ -22,3 +22,13 @@ func (r *Register) Validate() error {
 
 	return buildValidationError(validationErrDetails)
 }
+
+type RegisterResendVerification struct {
+	Email string `json:"email"`
+}
+
+func (r *RegisterResendVerification) Validate() error {
+	validationErrDetails := map[string]any{}
+	validateField(r.Email, "email", validationErrDetails, validation.Required, is.EmailFormat)
+	return buildValidationError(validationErrDetails)
+}

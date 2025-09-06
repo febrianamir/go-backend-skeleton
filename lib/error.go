@@ -49,8 +49,14 @@ var (
 	}
 	ErrorParseRequest = CustomError{
 		Message:    "Error Parse Request",
-		Code:       1004,
+		Code:       1005,
 		CodeString: "ERROR_PARSE_REQUEST",
+		HTTPCode:   http.StatusBadRequest,
+	}
+	ErrorVerificationDelay = CustomError{
+		Message:    "Error Verification Delay",
+		Code:       1006,
+		CodeString: "ERROR_VERIFICATION_DELAY",
 		HTTPCode:   http.StatusBadRequest,
 	}
 )

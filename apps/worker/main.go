@@ -26,13 +26,16 @@ func main() {
 	}
 	mailer := cfg.NewSMTP()
 	storage := cfg.NewStorage()
-	redis := cfg.NewRedis()
+	cache, err := cfg.NewCache()
+	if err != nil {
+		log.Fatal("failed connect to redis: ", err)
+	}
 	publisher, err := cfg.NewPublisher()
 	if err != nil {
 		log.Fatal("failed connect to publisher: ", err)
 	}
 
-	app := app.NewApp(db, mailer, storage, redis, publisher)
+	app := app.NewApp(cfg, db, mailer, storage, cache, publisher)
 	worker := worker.NewWorker(app)
 	server := cfg.NewConsumer()
 

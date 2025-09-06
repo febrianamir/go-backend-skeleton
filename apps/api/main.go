@@ -32,13 +32,16 @@ func main() {
 	}
 	mailer := cfg.NewSMTP()
 	storage := cfg.NewStorage()
-	redis := cfg.NewRedis()
+	cache, err := cfg.NewCache()
+	if err != nil {
+		log.Fatal("failed connect to redis: ", err)
+	}
 	publisher, err := cfg.NewPublisher()
 	if err != nil {
 		log.Fatal("failed connect to publisher: ", err)
 	}
 
-	app := app.NewApp(db, mailer, storage, redis, publisher)
+	app := app.NewApp(cfg, db, mailer, storage, cache, publisher)
 	handler := handler.NewHandler(app)
 	router := chi.NewRouter()
 
@@ -58,7 +61,10 @@ func main() {
 
 		// Auth
 		r.Route("/auth", func(r chi.Router) {
-			r.Post("/register", handler.Register)
+			r.Route("/register", func(r chi.Router) {
+				r.Post("/", handler.Register)
+				r.Post("/resend-verification", handler.RegisterResendVerification)
+			})
 		})
 
 		// User
