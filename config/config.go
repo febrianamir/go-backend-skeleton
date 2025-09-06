@@ -60,6 +60,12 @@ type Config struct {
 
 	// Auth Configuration
 	SEND_VERIFICATION_DELAY_TTL int // In seconds
+	MFA_FLAG_TTL                int // In seconds
+	ID_TOKEN_HMAC_KEY           string
+	ACCESS_TOKEN_TTL            int // In seconds
+	REFRESH_ACCESS_TOKEN_TTL    int // In seconds
+	MFA_ACCESS_TOKEN_TTL        int // In seconds
+	ID_TOKEN_TTL                int // In seconds
 }
 
 func InitConfig() *Config {
@@ -71,6 +77,11 @@ func InitConfig() *Config {
 	smtpPort := parseIntConfig("SMTP_PORT", 0)
 	minioSsl := parseBoolConfig("MINIO_SSL")
 	sendVerificationDelayTtl := parseIntConfig("SEND_VERIFICATION_DELAY_TTL", 60)
+	mfaFlagTtl := parseIntConfig("MFA_FLAG_TTL", 604800)
+	accessTokenTtl := parseIntConfig("ACCESS_TOKEN_TTL", 86400)
+	refreshTokenTtl := parseIntConfig("REFRESH_ACCESS_TOKEN_TTL", 604800)
+	mfaAccessTokenTtl := parseIntConfig("MFA_ACCESS_TOKEN_TTL", 3600)
+	idTokenTtl := parseIntConfig("ID_TOKEN_TTL", 86400)
 
 	return &Config{
 		ENV:                         os.Getenv("ENV"),
@@ -109,6 +120,12 @@ func InitConfig() *Config {
 		REDIS_PASSWORD:              os.Getenv("REDIS_PASSWORD"),
 		LOG_PATH:                    os.Getenv("LOG_PATH"),
 		SEND_VERIFICATION_DELAY_TTL: sendVerificationDelayTtl,
+		MFA_FLAG_TTL:                mfaFlagTtl,
+		ID_TOKEN_HMAC_KEY:           os.Getenv("ID_TOKEN_HMAC_KEY"),
+		ACCESS_TOKEN_TTL:            accessTokenTtl,
+		REFRESH_ACCESS_TOKEN_TTL:    refreshTokenTtl,
+		MFA_ACCESS_TOKEN_TTL:        mfaAccessTokenTtl,
+		ID_TOKEN_TTL:                idTokenTtl,
 	}
 }
 

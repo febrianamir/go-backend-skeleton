@@ -17,7 +17,7 @@ type App struct {
 
 func NewApp(config *config.Config, db *lib.Database, mailer *mailer.SMTP, storage storage.Storage, cache *cache.Cache, publisher *task.Publisher) *App {
 	repository := repository.NewRepository(config, db, mailer, publisher, cache)
-	usecase := usecase.NewUsecase(&repository, storage)
+	usecase := usecase.NewUsecase(config, &repository, storage)
 
 	return &App{
 		Usecase: &usecase,

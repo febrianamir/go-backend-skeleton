@@ -2,13 +2,19 @@ package usecase
 
 import (
 	"app/lib"
+	"app/lib/auth"
 	"app/lib/constant"
 	"app/lib/logger"
 	"app/model"
 	"app/request"
+	"app/response"
 	"context"
+	"errors"
+	"strconv"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -131,4 +137,162 @@ func (usecase *Usecase) RegisterResendVerification(ctx context.Context, req requ
 
 		return usecase.repo.SetVerificationDelayCache(ctx, user.ID, model.UserVerificationTypeVerifyAccount)
 	})
+}
+
+func (usecase *Usecase) Login(ctx context.Context, req request.Login) (res response.Login, err error) {
+	user, err := usecase.repo.GetUser(ctx, request.GetUser{
+		Email: req.Email,
+	})
+	if err != nil {
+		return res, err
+	}
+	if user.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Not Found"
+		return res, notFoundError
+	}
+
+	err = lib.CompareHashAndPassword(user.EncryptedPassword, req.Password)
+	if err != nil {
+		return res, lib.ErrorWrongCredential
+	}
+
+	isNeedMfa, err := usecase.isNeedMfa(ctx, user.ID)
+	if err != nil {
+		return res, err
+	}
+
+	auth, _, err := usecase.generateAuth(ctx, user, isNeedMfa)
+	if err != nil {
+		return res, err
+	}
+
+	return response.NewLogin(auth, user, isNeedMfa), nil
+}
+
+func (usecase *Usecase) isNeedMfa(ctx context.Context, userId uint) (bool, error) {
+	mfaFlag, err := usecase.repo.GetMfaFlag(ctx, userId)
+	if err != nil {
+		return true, err
+	}
+
+	if mfaFlag == "" {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (usecase *Usecase) generateAuth(ctx context.Context, user model.User, isNeedMfa bool) (model.UserAuth, bool, error) {
+	accessToken, idToken, accessTokenExp, idTokenExp, err := usecase.generateAuthToken(ctx, user, isNeedMfa)
+	if err != nil {
+		return model.UserAuth{}, false, err
+	}
+
+	auth := model.UserAuth{
+		UserID:               user.ID,
+		AccessToken:          accessToken,
+		IDToken:              idToken,
+		AccessTokenExpiredAt: accessTokenExp,
+		IDTokenExpiredAt:     idTokenExp,
+	}
+
+	if !isNeedMfa {
+		auth, err = usecase.repo.CreateAuth(ctx, auth)
+		if err != nil {
+			return model.UserAuth{}, false, err
+		}
+	}
+
+	return auth, isNeedMfa, nil
+}
+
+func (usecase *Usecase) generateAuthToken(ctx context.Context, user model.User, isMfaToken bool) (accessToken, idToken string, accessTokenExp, idTokenExp time.Time, err error) {
+	timeNow := time.Now()
+
+	idTokenExp = timeNow.Add(time.Duration(usecase.config.ID_TOKEN_TTL) * time.Second)
+	idToken, err = usecase.generateIDToken(ctx, auth.IDTokenClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(idTokenExp),
+			IssuedAt:  jwt.NewNumericDate(timeNow),
+			NotBefore: jwt.NewNumericDate(timeNow),
+			Issuer:    constant.DefaultIssuer,
+			Subject:   strconv.Itoa(int(user.ID)),
+			Audience:  []string{constant.DefaultAudience},
+		},
+		UserID:     user.ID,
+		IsMfaToken: isMfaToken,
+	})
+	if err != nil {
+		return "", "", time.Time{}, time.Time{}, err
+	}
+
+	accessTokenTtl := usecase.config.ACCESS_TOKEN_TTL
+	if isMfaToken {
+		accessTokenTtl = usecase.config.MFA_ACCESS_TOKEN_TTL
+	}
+
+	accessTokenExp = timeNow.Add(time.Duration(accessTokenTtl) * time.Second)
+	accessToken, err = usecase.generateAccessToken(ctx, auth.AccessTokenClaims{
+		Sub: strconv.Itoa(int(user.ID)),
+		Exp: uint(accessTokenExp.Unix()),
+	})
+	if err != nil {
+		return "", "", time.Time{}, time.Time{}, err
+	}
+
+	// TODO: generate refresh token
+
+	return accessToken, idToken, accessTokenExp, idTokenExp, err
+}
+
+func (usecase *Usecase) generateAccessToken(ctx context.Context, claims auth.AccessTokenClaims) (string, error) {
+	if claims.Sub == "" {
+		err := errors.New("Sub must be set")
+		logger.LogError(ctx, "Error generateAccessToken", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"usecase", "generateAccessToken"}),
+		}...)
+		return "", err
+	}
+
+	claims.Iat = uint(time.Now().Unix())
+
+	if claims.Exp == 0 {
+		err := errors.New("Exp must be set")
+		logger.LogError(ctx, "Error generateAccessToken", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"usecase", "generateAccessToken"}),
+		}...)
+		return "", err
+	}
+
+	if claims.Iss == "" {
+		claims.Iss = constant.DefaultIssuer
+	}
+
+	if len(claims.Aud) == 0 {
+		claims.Aud = append(claims.Aud, constant.DefaultAudience)
+	}
+
+	accessToken := uuid.New().String()
+	err := usecase.repo.SetAccessToken(ctx, accessToken, claims)
+	if err != nil {
+		return "", err
+	}
+
+	return accessToken, nil
+}
+
+func (usecase *Usecase) generateIDToken(ctx context.Context, claims auth.IDTokenClaims) (string, error) {
+	idToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedIDToken, err := idToken.SignedString([]byte(usecase.config.ID_TOKEN_HMAC_KEY))
+	if err != nil {
+		logger.LogError(ctx, "error idToken.SignedString", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"usecase", "generateIDToken"}),
+		}...)
+		return "", err
+	}
+	return signedIDToken, nil
 }

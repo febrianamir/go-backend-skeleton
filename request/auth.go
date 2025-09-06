@@ -32,3 +32,17 @@ func (r *RegisterResendVerification) Validate() error {
 	validateField(r.Email, "email", validationErrDetails, validation.Required, is.EmailFormat)
 	return buildValidationError(validationErrDetails)
 }
+
+type Login struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (r *Login) Validate() error {
+	validationErrDetails := map[string]any{}
+
+	validateField(r.Email, "email", validationErrDetails, validation.Required, is.EmailFormat)
+	validateField(r.Password, "password", validationErrDetails, IsPassword...)
+
+	return buildValidationError(validationErrDetails)
+}

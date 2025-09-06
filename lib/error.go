@@ -59,4 +59,10 @@ var (
 		CodeString: "ERROR_VERIFICATION_DELAY",
 		HTTPCode:   http.StatusBadRequest,
 	}
+	ErrorWrongCredential = CustomError{
+		Message:    "Error Wrong Credential",
+		Code:       1007,
+		CodeString: "ERROR_WRONG_CREDENTIAL",
+		HTTPCode:   http.StatusUnauthorized,
+	}
 )

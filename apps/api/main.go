@@ -65,6 +65,7 @@ func main() {
 				r.Post("/", handler.Register)
 				r.Post("/resend-verification", handler.RegisterResendVerification)
 			})
+			r.Post("/login", handler.Login)
 		})
 
 		// User
