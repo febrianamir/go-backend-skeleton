@@ -5,11 +5,8 @@ CREATE TABLE IF NOT EXISTS app_settings (
     value TEXT NOT NULL,
     slug VARCHAR(255) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
-    created_by INT,
     updated_at TIMESTAMPTZ NOT NULL,
-    updated_by INT,
-    deleted_at TIMESTAMPTZ,
-    deleted_by INT
+    deleted_at TIMESTAMPTZ
 );
 
 -- +migrate Down

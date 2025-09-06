@@ -52,9 +52,7 @@ func (usecase *Usecase) Register(ctx context.Context, req request.Register) (err
 			IsActive:          true,
 			IsVerified:        false,
 			CreatedAt:         timeNow,
-			CreatedBy:         0,
 			UpdatedAt:         timeNow,
-			UpdatedBy:         0,
 		})
 		if err != nil {
 			return err

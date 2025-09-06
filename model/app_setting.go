@@ -12,9 +12,6 @@ type AppSetting struct {
 	Value     string         `json:"value"`
 	Slug      string         `json:"slug"`
 	CreatedAt time.Time      `json:"created_at"`
-	CreatedBy uint           `json:"created_by"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	UpdatedBy uint           `json:"updated_by"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at"`
-	DeletedBy uint           `json:"deleted_by"`
 }

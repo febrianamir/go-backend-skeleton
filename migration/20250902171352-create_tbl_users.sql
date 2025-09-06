@@ -8,11 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
     is_active BOOLEAN DEFAULT FALSE,
     is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL,
-    created_by INT,
     updated_at TIMESTAMPTZ NOT NULL,
-    updated_by INT,
-    deleted_at TIMESTAMPTZ,
-    deleted_by INT
+    deleted_at TIMESTAMPTZ
 );
 
 -- +migrate Down

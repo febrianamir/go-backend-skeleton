@@ -73,9 +73,7 @@ func (usecase *Usecase) CreateUser(ctx context.Context, req request.CreateUser) 
 		IsActive:          true,
 		IsVerified:        true,
 		CreatedAt:         timeNow,
-		CreatedBy:         0,
 		UpdatedAt:         timeNow,
-		UpdatedBy:         0,
 	})
 	return err
 }
