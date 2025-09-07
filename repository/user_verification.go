@@ -27,6 +27,11 @@ func (repo *Repository) GetUserVerification(ctx context.Context, req request.Get
 	if req.UserID > 0 {
 		stmt = stmt.Where("user_id = ?", req.UserID)
 	}
+
+	if req.Code != "" {
+		stmt = stmt.Where("code = ?", req.Code)
+	}
+
 	if len(req.Preloads) > 0 {
 		for _, preload := range req.Preloads {
 			stmt = stmt.Preload(preload)
@@ -39,4 +44,15 @@ func (repo *Repository) GetUserVerification(ctx context.Context, req request.Get
 	}
 
 	return res, nil
+}
+
+func (repo *Repository) UpdateUserVerification(ctx context.Context, userVerification model.UserVerification) (model.UserVerification, error) {
+	ctx, tx := repo.prepareDBWithContext(ctx, "UpdateUserVerification")
+
+	err := tx.Save(&userVerification).Error
+	if err != nil {
+		return userVerification, err
+	}
+
+	return userVerification, nil
 }

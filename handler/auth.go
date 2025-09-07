@@ -43,6 +43,25 @@ func (handler *Handler) RegisterResendVerification(w http.ResponseWriter, r *htt
 	WriteSuccess(ctx, w, nil, "success", ResponseMeta{HTTPStatus: http.StatusOK})
 }
 
+func (handler *Handler) VerifyAccount(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	req := request.VerifyAccount{}
+	err := decodeAndValidateRequest(r, &req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	res, err := handler.App.Usecase.VerifyAccount(ctx, req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	WriteSuccess(ctx, w, res, "success", ResponseMeta{HTTPStatus: http.StatusOK})
+}
+
 func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

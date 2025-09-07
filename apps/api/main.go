@@ -64,6 +64,7 @@ func main() {
 			r.Route("/register", func(r chi.Router) {
 				r.Post("/", handler.Register)
 				r.Post("/resend-verification", handler.RegisterResendVerification)
+				r.Post("/verify-account", handler.VerifyAccount)
 			})
 			r.Post("/login", handler.Login)
 		})

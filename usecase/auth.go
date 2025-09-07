@@ -137,7 +137,75 @@ func (usecase *Usecase) RegisterResendVerification(ctx context.Context, req requ
 	})
 }
 
-func (usecase *Usecase) Login(ctx context.Context, req request.Login) (res response.Login, err error) {
+func (usecase *Usecase) VerifyAccount(ctx context.Context, req request.VerifyAccount) (response.Auth, error) {
+	userVerification, err := usecase.repo.GetUserVerification(ctx, request.GetUserVerification{
+		Code: req.Code,
+	})
+	if err != nil {
+		return response.Auth{}, err
+	}
+	if userVerification.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Verification Not Found"
+		return response.Auth{}, notFoundError
+	}
+
+	if userVerification.ExpiredAt != nil && !userVerification.ExpiredAt.IsZero() {
+		return response.Auth{}, lib.ErrorVerificationInactive
+	}
+
+	if userVerification.UsedAt != nil && !userVerification.UsedAt.IsZero() {
+		return response.Auth{}, lib.ErrorVerificationInactive
+	}
+
+	user, err := usecase.repo.GetUser(ctx, request.GetUser{
+		ID: userVerification.UserID,
+	})
+	if err != nil {
+		return response.Auth{}, err
+	}
+	if user.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Not Found"
+		return response.Auth{}, notFoundError
+	}
+
+	var auth model.UserAuth
+	err = usecase.repo.Transaction(ctx, func(ctx context.Context) error {
+		timeNow := time.Now()
+
+		user.IsActive = true
+		user.IsVerified = true
+		user.UpdatedAt = timeNow
+		_, err := usecase.repo.UpdateUser(ctx, user)
+		if err != nil {
+			return err
+		}
+
+		userVerification.ExpiredAt = &timeNow
+		userVerification.UsedAt = &timeNow
+		userVerification.UpdatedAt = timeNow
+		_, err = usecase.repo.UpdateUserVerification(ctx, userVerification)
+		if err != nil {
+			return err
+		}
+
+		// Generate non-mfa auth
+		auth, _, err = usecase.generateAuth(ctx, user, false)
+		if err != nil {
+			return err
+		}
+
+		return usecase.repo.SetMfaFlag(ctx, user.ID)
+	})
+	if err != nil {
+		return response.Auth{}, err
+	}
+
+	return response.NewAuth(auth, user, false), nil
+}
+
+func (usecase *Usecase) Login(ctx context.Context, req request.Login) (res response.Auth, err error) {
 	user, err := usecase.repo.GetUser(ctx, request.GetUser{
 		Email: req.Email,
 	})
@@ -165,7 +233,7 @@ func (usecase *Usecase) Login(ctx context.Context, req request.Login) (res respo
 		return res, err
 	}
 
-	return response.NewLogin(auth, user, isNeedMfa), nil
+	return response.NewAuth(auth, user, isNeedMfa), nil
 }
 
 func (usecase *Usecase) isNeedMfa(ctx context.Context, userId uint) (bool, error) {

@@ -33,6 +33,16 @@ func (r *RegisterResendVerification) Validate() error {
 	return buildValidationError(validationErrDetails)
 }
 
+type VerifyAccount struct {
+	Code string `json:"code"`
+}
+
+func (r *VerifyAccount) Validate() error {
+	validationErrDetails := map[string]any{}
+	validateField(r.Code, "code", validationErrDetails, validation.Required)
+	return buildValidationError(validationErrDetails)
+}
+
 type Login struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`

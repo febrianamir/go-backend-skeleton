@@ -65,4 +65,10 @@ var (
 		CodeString: "ERROR_WRONG_CREDENTIAL",
 		HTTPCode:   http.StatusUnauthorized,
 	}
+	ErrorVerificationInactive = CustomError{
+		Message:    "Error Verification Inactive",
+		Code:       1008,
+		CodeString: "ERROR_VERIFICATION_INACTIVE",
+		HTTPCode:   http.StatusBadRequest,
+	}
 )

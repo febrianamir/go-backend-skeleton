@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Login struct {
+type Auth struct {
 	IsNeedMfa             bool         `json:"is_need_mfa"`
 	UserID                uint         `json:"user_id"`
 	User                  UserDetailed `json:"user"`
@@ -17,8 +17,8 @@ type Login struct {
 	UpdatedAt             time.Time    `json:"updated_at"`
 }
 
-func NewLogin(auth model.UserAuth, user model.User, isNeedMfa bool) Login {
-	return Login{
+func NewAuth(auth model.UserAuth, user model.User, isNeedMfa bool) Auth {
+	return Auth{
 		IsNeedMfa:             isNeedMfa,
 		UserID:                auth.UserID,
 		User:                  NewUserDetailed(user),
