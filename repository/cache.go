@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"go.uber.org/zap"
@@ -65,4 +66,46 @@ func (repo *Repository) GetAccessToken(ctx context.Context, accessToken string) 
 	}
 
 	return claims, nil
+}
+
+func (repo *Repository) GetSendOtpRateLimitCtrWithTtl(ctx context.Context, identifier uint, otpType string) (int, time.Duration, error) {
+	otpRateLimitCtrKey := fmt.Sprintf(constant.SendOtpCtrKeyPrefix, identifier, otpType)
+	ctrString, duration, err := repo.cache.GetWithTtl(ctx, otpRateLimitCtrKey)
+	if err != nil {
+		return 0, 0, err
+	}
+	if ctrString == "" {
+		return 0, 0, nil
+	}
+
+	ctr, err := strconv.Atoi(ctrString)
+	if err != nil {
+		logger.LogError(ctx, "error strconv.Atoi", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"repository", "GetSendOtpRateLimitCtrWithTtl"}),
+		}...)
+		return 0, 0, err
+	}
+
+	return ctr, duration, nil
+}
+
+func (repo *Repository) IncrSendOtpRateLimitCtr(ctx context.Context, identifier uint, otpType string) (int64, error) {
+	otpRateLimitCtrKey := fmt.Sprintf(constant.SendOtpCtrKeyPrefix, identifier, otpType)
+	return repo.cache.Incr(ctx, otpRateLimitCtrKey)
+}
+
+func (repo *Repository) ExpSendOtpRateLimitCtr(ctx context.Context, identifier uint, otpType string) error {
+	otpRateLimitCtrKey := fmt.Sprintf(constant.SendOtpCtrKeyPrefix, identifier, otpType)
+	return repo.cache.Expire(ctx, otpRateLimitCtrKey, time.Duration(repo.config.SEND_OTP_MAX_RATE_LIMIT_TTL)*time.Second)
+}
+
+func (repo *Repository) TtlSendOtpDelay(ctx context.Context, identifier uint, otpType string) (time.Duration, error) {
+	sendOtpDelayKey := fmt.Sprintf(constant.SendOtpDelayKeyPrefix, identifier, otpType)
+	return repo.cache.TTL(ctx, sendOtpDelayKey)
+}
+
+func (repo *Repository) SetSendOtpDelay(ctx context.Context, identifier uint, otpType string) error {
+	sendOtpDelayKey := fmt.Sprintf(constant.SendOtpDelayKeyPrefix, identifier, otpType)
+	return repo.cache.Set(ctx, sendOtpDelayKey, "default", time.Duration(repo.config.SEND_OTP_DELAY_TTL)*time.Second)
 }

@@ -236,6 +236,66 @@ func (usecase *Usecase) Login(ctx context.Context, req request.Login) (res respo
 	return response.NewAuth(auth, user, isNeedMfa), nil
 }
 
+func (usecase *Usecase) SendOtp(ctx context.Context, req request.SendOtp) error {
+	if req.Channel == "" {
+		req.Channel = constant.OtpChannelEmail
+	}
+
+	user, err := usecase.repo.GetUser(ctx, request.GetUser{
+		ID: req.UserId,
+	})
+	if err != nil {
+		return err
+	}
+	if user.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Not Found"
+		return notFoundError
+	}
+
+	err = usecase.checkSendOtpRateLimit(ctx, user.ID, constant.OtpTypeLogin)
+	if err != nil {
+		return err
+	}
+
+	err = usecase.repo.Transaction(ctx, func(ctx context.Context) error {
+		timeNow := time.Now()
+
+		otpSecret, err := auth.GenerateOtpSecret(ctx, user.ID, usecase.config.TOTP_PERIOD)
+		if err != nil {
+			return err
+		}
+
+		user.OtpSecret = otpSecret
+		user.UpdatedAt = timeNow
+		_, err = usecase.repo.UpdateUser(ctx, user)
+		if err != nil {
+			return err
+		}
+
+		otpCode, err := auth.GenerateOtpCode(otpSecret, usecase.config.TOTP_PERIOD)
+		if err != nil {
+			return err
+		}
+
+		err = usecase.repo.PublishTask(ctx, constant.TaskTypeEmailSend, request.SendEmailPayload{
+			To:           []string{user.Email},
+			TemplateName: "otp.html",
+			TemplateData: map[string]any{
+				"otp_code": otpCode,
+			},
+			Subject: "OTP",
+		})
+		if err != nil {
+			return err
+		}
+
+		return usecase.updateSendOtpRateLimit(ctx, user.ID, constant.OtpTypeLogin)
+	})
+
+	return nil
+}
+
 func (usecase *Usecase) GetIDToken(ctx context.Context, accessToken string) (string, error) {
 	accessTokenClaims, err := usecase.repo.GetAccessToken(ctx, accessToken)
 	if err != nil {
@@ -392,4 +452,53 @@ func (usecase *Usecase) generateIDToken(ctx context.Context, claims auth.IDToken
 		return "", err
 	}
 	return signedIDToken, nil
+}
+
+func (usecase *Usecase) checkSendOtpRateLimit(ctx context.Context, identifier uint, otpType string) error {
+	ctr, sendOtpRateLimitTtl, err := usecase.repo.GetSendOtpRateLimitCtrWithTtl(ctx, identifier, otpType)
+	if err != nil {
+		return err
+	}
+	if ctr >= usecase.config.SEND_OTP_MAX_RATE_LIMIT {
+		otpRateLimitError := lib.ErrorOtpRateLimit
+		otpRateLimitError.ErrDetails = map[string]any{
+			"remaining_ttl": sendOtpRateLimitTtl / time.Second,
+		}
+		return otpRateLimitError
+	}
+
+	sendOtpDelayTtl, err := usecase.repo.TtlSendOtpDelay(ctx, identifier, otpType)
+	if err != nil {
+		return err
+	}
+	if sendOtpDelayTtl > 0 {
+		otpDelayError := lib.ErrorOtpDelay
+		otpDelayError.ErrDetails = map[string]any{
+			"remaining_ttl": sendOtpDelayTtl / time.Second,
+		}
+		return otpDelayError
+	}
+
+	return nil
+}
+
+func (usecase *Usecase) updateSendOtpRateLimit(ctx context.Context, identifier uint, otpType string) error {
+	err := usecase.repo.SetSendOtpDelay(ctx, identifier, otpType)
+	if err != nil {
+		return err
+	}
+
+	newCtr, err := usecase.repo.IncrSendOtpRateLimitCtr(ctx, identifier, otpType)
+	if err != nil {
+		return err
+	}
+
+	if newCtr == 1 {
+		err = usecase.repo.ExpSendOtpRateLimitCtr(ctx, identifier, otpType)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -12,6 +12,7 @@ type User struct {
 	Email             string         `json:"email"`
 	PhoneNumber       string         `json:"phone_number"`
 	EncryptedPassword string         `json:"encrypted_password"`
+	OtpSecret         string         `json:"otp_secret"`
 	IsActive          bool           `json:"is_active"`
 	IsVerified        bool           `json:"is_verified"`
 	CreatedAt         time.Time      `json:"created_at"`

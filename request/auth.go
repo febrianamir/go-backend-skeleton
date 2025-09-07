@@ -56,3 +56,16 @@ func (r *Login) Validate() error {
 
 	return buildValidationError(validationErrDetails)
 }
+
+type SendMfaOtp struct {
+	Channel string `json:"channel"`
+}
+
+func (r *SendMfaOtp) Validate() error {
+	return nil
+}
+
+type SendOtp struct {
+	Channel string `json:"channel"`
+	UserId  uint   `json:"user_id"`
+}

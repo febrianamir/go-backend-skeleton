@@ -57,7 +57,7 @@ var (
 		Message:    "Error Verification Delay",
 		Code:       1006,
 		CodeString: "ERROR_VERIFICATION_DELAY",
-		HTTPCode:   http.StatusBadRequest,
+		HTTPCode:   http.StatusUnprocessableEntity,
 	}
 	ErrorWrongCredential = CustomError{
 		Message:    "Error Wrong Credential",
@@ -76,5 +76,17 @@ var (
 		Code:       1009,
 		CodeString: "ERROR_UNAUTHORIZED",
 		HTTPCode:   http.StatusUnauthorized,
+	}
+	ErrorOtpRateLimit = CustomError{
+		Message:    "Error Otp Rate Limit Exceeded",
+		Code:       1010,
+		CodeString: "ERROR_OTP_RATE_LIMIT",
+		HTTPCode:   http.StatusUnprocessableEntity,
+	}
+	ErrorOtpDelay = CustomError{
+		Message:    "Error Otp Delay",
+		Code:       1011,
+		CodeString: "ERROR_OTP_DELAY",
+		HTTPCode:   http.StatusUnprocessableEntity,
 	}
 )

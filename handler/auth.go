@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"app/lib"
+	"app/lib/auth"
 	"app/request"
 	"net/http"
 )
@@ -79,4 +81,32 @@ func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteSuccess(ctx, w, res, "success", ResponseMeta{HTTPStatus: http.StatusOK})
+}
+
+func (handler *Handler) SendMfaOtp(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	idTokenClaims := auth.GetAuthFromCtx(ctx)
+	if idTokenClaims.UserID == 0 {
+		WriteError(ctx, w, lib.ErrorUnauthorized)
+		return
+	}
+
+	req := request.SendMfaOtp{}
+	err := decodeAndValidateRequest(r, &req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	err = handler.App.Usecase.SendOtp(ctx, request.SendOtp{
+		Channel: req.Channel,
+		UserId:  idTokenClaims.UserID,
+	})
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	WriteSuccess(ctx, w, nil, "success", ResponseMeta{HTTPStatus: http.StatusOK})
 }

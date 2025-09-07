@@ -66,6 +66,10 @@ type Config struct {
 	REFRESH_ACCESS_TOKEN_TTL    int // In seconds
 	MFA_ACCESS_TOKEN_TTL        int // In seconds
 	ID_TOKEN_TTL                int // In seconds
+	TOTP_PERIOD                 int // In seconds
+	SEND_OTP_MAX_RATE_LIMIT     int
+	SEND_OTP_MAX_RATE_LIMIT_TTL int // In seconds
+	SEND_OTP_DELAY_TTL          int // In seconds
 }
 
 func InitConfig() *Config {
@@ -82,6 +86,10 @@ func InitConfig() *Config {
 	refreshTokenTtl := parseIntConfig("REFRESH_ACCESS_TOKEN_TTL", 604800)
 	mfaAccessTokenTtl := parseIntConfig("MFA_ACCESS_TOKEN_TTL", 3600)
 	idTokenTtl := parseIntConfig("ID_TOKEN_TTL", 86400)
+	totpPeriod := parseIntConfig("TOTP_PERIOD", 120)
+	sendOtpMaxRateLimit := parseIntConfig("SEND_OTP_MAX_RATE_LIMIT", 3)
+	sendOtpMaxRateLimitTtl := parseIntConfig("SEND_OTP_MAX_RATE_LIMIT_TTL", 3600)
+	sendOtpDelayTtl := parseIntConfig("SEND_OTP_DELAY_TTL", 120)
 
 	return &Config{
 		ENV:                         os.Getenv("ENV"),
@@ -126,6 +134,10 @@ func InitConfig() *Config {
 		REFRESH_ACCESS_TOKEN_TTL:    refreshTokenTtl,
 		MFA_ACCESS_TOKEN_TTL:        mfaAccessTokenTtl,
 		ID_TOKEN_TTL:                idTokenTtl,
+		TOTP_PERIOD:                 totpPeriod,
+		SEND_OTP_MAX_RATE_LIMIT:     sendOtpMaxRateLimit,
+		SEND_OTP_MAX_RATE_LIMIT_TTL: sendOtpMaxRateLimitTtl,
+		SEND_OTP_DELAY_TTL:          sendOtpDelayTtl,
 	}
 }
 

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL,
     phone_number VARCHAR(25) NOT NULL,
     encrypted_password VARCHAR(255) NOT NULL,
+    otp_secret TEXT,
     is_active BOOLEAN DEFAULT FALSE,
     is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL,

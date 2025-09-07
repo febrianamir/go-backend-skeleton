@@ -1,9 +1,15 @@
 package auth
 
 import (
+	"app/lib/constant"
+	"app/lib/logger"
 	"context"
+	"strconv"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/pquerna/otp/totp"
+	"go.uber.org/zap"
 )
 
 type UserCtxKey struct{}
@@ -35,4 +41,39 @@ func GetAuthFromCtx(ctx context.Context) *IDTokenClaims {
 		return idTokenClaim
 	}
 	return nil
+}
+
+func GenerateOtpSecret(ctx context.Context, userId uint, period int) (string, error) {
+	identifier := strconv.Itoa(int(userId))
+	secret, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      constant.DefaultIssuer,
+		AccountName: identifier,
+		Period:      uint(period),
+		Digits:      6,
+	})
+	if err != nil {
+		logger.LogError(ctx, "totp.Generate", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"auth", "GenerateOtpSecret"}),
+		}...)
+		return "", err
+	}
+
+	return secret.Secret(), nil
+}
+
+func GenerateOtpCode(secret string, period int) (string, error) {
+	return totp.GenerateCodeCustom(secret, time.Now(), totp.ValidateOpts{
+		Period: uint(period),
+		Digits: 6,
+		Skew:   1,
+	})
+}
+
+func ValidateOtpCode(otpCode, secret string, period int) (bool, error) {
+	return totp.ValidateCustom(otpCode, secret, time.Now(), totp.ValidateOpts{
+		Period: uint(period),
+		Digits: 6,
+		Skew:   1,
+	})
 }
