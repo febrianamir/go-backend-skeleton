@@ -27,6 +27,19 @@ func (r *Cache) Get(ctx context.Context, key string) (data string, err error) {
 	return data, nil
 }
 
+func (r *Cache) GetBytes(ctx context.Context, key string) (data []byte, err error) {
+	data, err = r.Client.Get(ctx, key).Bytes()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		logger.LogError(ctx, "error cache.GetBytes", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"cache", "GetBytes"}),
+		}...)
+		return []byte{}, err
+	}
+
+	return data, nil
+}
+
 func (r *Cache) GetWithTtl(ctx context.Context, key string) (string, time.Duration, error) {
 	pipe := r.Client.Pipeline()
 

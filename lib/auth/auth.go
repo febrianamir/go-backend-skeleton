@@ -1,6 +1,12 @@
 package auth
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"context"
+
+	"github.com/golang-jwt/jwt/v5"
+)
+
+type UserCtxKey struct{}
 
 // https://auth0.com/docs/secure/tokens/access-tokens#sample-access-token
 type AccessTokenClaims struct {
@@ -18,4 +24,15 @@ type IDTokenClaims struct {
 	jwt.RegisteredClaims
 	IsMfaToken bool `json:"is_mfa_token"`
 	UserID     uint `json:"user_id"`
+}
+
+func NewFromCtx(ctx context.Context, idTokenClaim *IDTokenClaims) context.Context {
+	return context.WithValue(ctx, UserCtxKey{}, idTokenClaim)
+}
+
+func GetAuthFromCtx(ctx context.Context) *IDTokenClaims {
+	if idTokenClaim, ok := ctx.Value(UserCtxKey{}).(*IDTokenClaims); ok {
+		return idTokenClaim
+	}
+	return nil
 }

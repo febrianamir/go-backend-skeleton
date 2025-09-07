@@ -46,3 +46,23 @@ func (repo *Repository) SetAccessToken(ctx context.Context, accessToken string, 
 
 	return repo.cache.Set(ctx, accessTokenKey, string(data), time.Duration(repo.config.ACCESS_TOKEN_TTL)*time.Second)
 }
+
+func (repo *Repository) GetAccessToken(ctx context.Context, accessToken string) (auth.AccessTokenClaims, error) {
+	accessTokenKey := fmt.Sprintf(constant.AccessTokenKeyPrefix, accessToken)
+	accessTokenBytes, err := repo.cache.GetBytes(ctx, accessTokenKey)
+	if err != nil {
+		return auth.AccessTokenClaims{}, err
+	}
+
+	var claims auth.AccessTokenClaims
+	err = json.Unmarshal(accessTokenBytes, &claims)
+	if err != nil {
+		logger.LogError(ctx, "error json.Unmarshal", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"repository", "GetAccessToken"}),
+		}...)
+		return auth.AccessTokenClaims{}, err
+	}
+
+	return claims, nil
+}

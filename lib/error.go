@@ -71,4 +71,10 @@ var (
 		CodeString: "ERROR_VERIFICATION_INACTIVE",
 		HTTPCode:   http.StatusBadRequest,
 	}
+	ErrorUnauthorized = CustomError{
+		Message:    "Error Unauthorized",
+		Code:       1009,
+		CodeString: "ERROR_UNAUTHORIZED",
+		HTTPCode:   http.StatusUnauthorized,
+	}
 )

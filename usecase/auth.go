@@ -236,6 +236,36 @@ func (usecase *Usecase) Login(ctx context.Context, req request.Login) (res respo
 	return response.NewAuth(auth, user, isNeedMfa), nil
 }
 
+func (usecase *Usecase) GetIDToken(ctx context.Context, accessToken string) (string, error) {
+	accessTokenClaims, err := usecase.repo.GetAccessToken(ctx, accessToken)
+	if err != nil {
+		return "", err
+	}
+	return accessTokenClaims.IDToken, err
+}
+
+func (usecase *Usecase) ParseIDToken(ctx context.Context, idToken string) (*auth.IDTokenClaims, error) {
+	token, err := jwt.ParseWithClaims(idToken, &auth.IDTokenClaims{}, func(token *jwt.Token) (any, error) {
+		return []byte(usecase.config.ID_TOKEN_HMAC_KEY), nil
+	})
+	if err != nil {
+		logger.LogError(ctx, "Error jwt.ParseWithClaims", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"usecase", "ParseIDToken"}),
+		}...)
+		return nil, err
+	}
+
+	if idTokenClaim, ok := token.Claims.(*auth.IDTokenClaims); ok {
+		return idTokenClaim, nil
+	}
+
+	logger.LogError(ctx, "Failed parse id token claims", []zap.Field{
+		zap.Strings("tags", []string{"usecase", "ParseIDToken"}),
+	}...)
+	return nil, errors.New("Failed parse id token claims")
+}
+
 func (usecase *Usecase) isNeedMfa(ctx context.Context, userId uint) (bool, error) {
 	mfaFlag, err := usecase.repo.GetMfaFlag(ctx, userId)
 	if err != nil {
@@ -300,8 +330,9 @@ func (usecase *Usecase) generateAuthToken(ctx context.Context, user model.User, 
 
 	accessTokenExp = timeNow.Add(time.Duration(accessTokenTtl) * time.Second)
 	accessToken, err = usecase.generateAccessToken(ctx, auth.AccessTokenClaims{
-		Sub: strconv.Itoa(int(user.ID)),
-		Exp: uint(accessTokenExp.Unix()),
+		Sub:     strconv.Itoa(int(user.ID)),
+		Exp:     uint(accessTokenExp.Unix()),
+		IDToken: idToken,
 	})
 	if err != nil {
 		return "", "", time.Time{}, time.Time{}, err
