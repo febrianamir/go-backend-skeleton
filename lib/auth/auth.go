@@ -62,18 +62,36 @@ func GenerateOtpSecret(ctx context.Context, userId uint, period int) (string, er
 	return secret.Secret(), nil
 }
 
-func GenerateOtpCode(secret string, period int) (string, error) {
-	return totp.GenerateCodeCustom(secret, time.Now(), totp.ValidateOpts{
+func GenerateOtpCode(ctx context.Context, secret string, period int) (string, error) {
+	otpCode, err := totp.GenerateCodeCustom(secret, time.Now(), totp.ValidateOpts{
 		Period: uint(period),
 		Digits: 6,
 		Skew:   1,
 	})
+	if err != nil {
+		logger.LogError(ctx, "totp.GenerateCodeCustom", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"auth", "GenerateOtpCode"}),
+		}...)
+		return "", err
+	}
+
+	return otpCode, nil
 }
 
-func ValidateOtpCode(otpCode, secret string, period int) (bool, error) {
-	return totp.ValidateCustom(otpCode, secret, time.Now(), totp.ValidateOpts{
+func ValidateOtpCode(ctx context.Context, otpCode, secret string, period int) (bool, error) {
+	validateOtp, err := totp.ValidateCustom(otpCode, secret, time.Now(), totp.ValidateOpts{
 		Period: uint(period),
 		Digits: 6,
 		Skew:   1,
 	})
+	if err != nil {
+		logger.LogError(ctx, "totp.ValidateCustom", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"auth", "ValidateOtpCode"}),
+		}...)
+		return false, err
+	}
+
+	return validateOtp, nil
 }

@@ -273,7 +273,7 @@ func (usecase *Usecase) SendOtp(ctx context.Context, req request.SendOtp) error 
 			return err
 		}
 
-		otpCode, err := auth.GenerateOtpCode(otpSecret, usecase.config.TOTP_PERIOD)
+		otpCode, err := auth.GenerateOtpCode(ctx, otpSecret, usecase.config.TOTP_PERIOD)
 		if err != nil {
 			return err
 		}
@@ -294,6 +294,44 @@ func (usecase *Usecase) SendOtp(ctx context.Context, req request.SendOtp) error 
 	})
 
 	return nil
+}
+
+func (usecase *Usecase) ValidateOtp(ctx context.Context, req request.ValidateMfaOtp) (response.Auth, error) {
+	user, err := usecase.repo.GetUser(ctx, request.GetUser{
+		ID: req.UserId,
+	})
+	if err != nil {
+		return response.Auth{}, err
+	}
+	if user.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Not Found"
+		return response.Auth{}, notFoundError
+	}
+	if user.OtpSecret == "" {
+		return response.Auth{}, lib.ErrorOtpInvalid
+	}
+
+	validateOtp, err := auth.ValidateOtpCode(ctx, req.OtpCode, user.OtpSecret, usecase.config.TOTP_PERIOD)
+	if err != nil {
+		return response.Auth{}, err
+	}
+	if !validateOtp {
+		return response.Auth{}, lib.ErrorOtpInvalid
+	}
+
+	var auth model.UserAuth
+	err = usecase.repo.Transaction(ctx, func(ctx context.Context) error {
+		// Generate non-mfa auth
+		auth, _, err = usecase.generateAuth(ctx, user, false)
+		if err != nil {
+			return err
+		}
+
+		return usecase.repo.SetMfaFlag(ctx, user.ID)
+	})
+
+	return response.NewAuth(auth, user, false), nil
 }
 
 func (usecase *Usecase) GetIDToken(ctx context.Context, accessToken string) (string, error) {

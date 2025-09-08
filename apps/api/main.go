@@ -72,6 +72,7 @@ func main() {
 
 				r.Route("/otp", func(r chi.Router) {
 					r.Post("/send", handler.SendMfaOtp)
+					r.Post("/validate", handler.ValidateMfaOtp)
 				})
 			})
 		})

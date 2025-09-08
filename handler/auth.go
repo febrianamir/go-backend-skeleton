@@ -110,3 +110,31 @@ func (handler *Handler) SendMfaOtp(w http.ResponseWriter, r *http.Request) {
 
 	WriteSuccess(ctx, w, nil, "success", ResponseMeta{HTTPStatus: http.StatusOK})
 }
+
+func (handler *Handler) ValidateMfaOtp(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	idTokenClaims := auth.GetAuthFromCtx(ctx)
+	if idTokenClaims.UserID == 0 {
+		WriteError(ctx, w, lib.ErrorUnauthorized)
+		return
+	}
+
+	req := request.ValidateMfaOtp{}
+	err := decodeAndValidateRequest(r, &req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	res, err := handler.App.Usecase.ValidateOtp(ctx, request.ValidateMfaOtp{
+		OtpCode: req.OtpCode,
+		UserId:  idTokenClaims.UserID,
+	})
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	WriteSuccess(ctx, w, res, "success", ResponseMeta{HTTPStatus: http.StatusOK})
+}

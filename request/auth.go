@@ -69,3 +69,14 @@ type SendOtp struct {
 	Channel string `json:"channel"`
 	UserId  uint   `json:"user_id"`
 }
+
+type ValidateMfaOtp struct {
+	OtpCode string `json:"otp_code"`
+	UserId  uint   `json:"user_id"`
+}
+
+func (r *ValidateMfaOtp) Validate() error {
+	validationErrDetails := map[string]any{}
+	validateField(r.OtpCode, "otp_code", validationErrDetails, validation.Required)
+	return buildValidationError(validationErrDetails)
+}

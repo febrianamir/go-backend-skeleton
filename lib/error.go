@@ -89,4 +89,10 @@ var (
 		CodeString: "ERROR_OTP_DELAY",
 		HTTPCode:   http.StatusUnprocessableEntity,
 	}
+	ErrorOtpInvalid = CustomError{
+		Message:    "Error Otp Invalid",
+		Code:       1011,
+		CodeString: "ERROR_OTP_INVALID",
+		HTTPCode:   http.StatusUnprocessableEntity,
+	}
 )
