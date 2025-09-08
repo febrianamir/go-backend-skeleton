@@ -404,6 +404,66 @@ func (usecase *Usecase) ForgotPassword(ctx context.Context, req request.ForgotPa
 	})
 }
 
+func (usecase *Usecase) ResetPassword(ctx context.Context, req request.ResetPassword) (err error) {
+	userVerification, err := usecase.repo.GetUserVerification(ctx, request.GetUserVerification{
+		Code: req.Code,
+	})
+	if err != nil {
+		return err
+	}
+	if userVerification.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Verification Not Found"
+		return notFoundError
+	}
+
+	if userVerification.ExpiredAt != nil && !userVerification.ExpiredAt.IsZero() {
+		return lib.ErrorVerificationInactive
+	}
+
+	if userVerification.UsedAt != nil && !userVerification.UsedAt.IsZero() {
+		return lib.ErrorVerificationInactive
+	}
+
+	user, err := usecase.repo.GetUser(ctx, request.GetUser{
+		ID: userVerification.UserID,
+	})
+	if err != nil {
+		return err
+	}
+	if user.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Not Found"
+		return notFoundError
+	}
+
+	return usecase.repo.Transaction(ctx, func(ctx context.Context) error {
+		timeNow := time.Now()
+
+		newEncryptedPassword, err := lib.GeneratePasswordHash(req.NewPassword)
+		if err != nil {
+			return err
+		}
+
+		user.EncryptedPassword = newEncryptedPassword
+		user.UpdatedAt = timeNow
+		_, err = usecase.repo.UpdateUser(ctx, user)
+		if err != nil {
+			return err
+		}
+
+		userVerification.ExpiredAt = &timeNow
+		userVerification.UsedAt = &timeNow
+		userVerification.UpdatedAt = timeNow
+		_, err = usecase.repo.UpdateUserVerification(ctx, userVerification)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func (usecase *Usecase) GetIDToken(ctx context.Context, accessToken string) (string, error) {
 	accessTokenClaims, err := usecase.repo.GetAccessToken(ctx, accessToken)
 	if err != nil {

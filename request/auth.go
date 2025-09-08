@@ -90,3 +90,17 @@ func (r *ForgotPassword) Validate() error {
 	validateField(r.Email, "email", validationErrDetails, validation.Required, is.EmailFormat)
 	return buildValidationError(validationErrDetails)
 }
+
+type ResetPassword struct {
+	Code               string `json:"code"`
+	NewPassword        string `json:"new_password"`
+	ConfirmNewPassword string `json:"confirm_new_password"`
+}
+
+func (r *ResetPassword) Validate() error {
+	validationErrDetails := map[string]any{}
+	validateField(r.Code, "code", validationErrDetails, validation.Required)
+	validateField(r.NewPassword, "new_password", validationErrDetails, IsPassword...)
+	validateField(r.ConfirmNewPassword, "confirm_new_password", validationErrDetails, validation.By(isEqual(r.NewPassword, "password")))
+	return buildValidationError(validationErrDetails)
+}

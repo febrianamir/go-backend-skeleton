@@ -157,3 +157,22 @@ func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 
 	WriteSuccess(ctx, w, nil, "success", ResponseMeta{HTTPStatus: http.StatusOK})
 }
+
+func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	req := request.ResetPassword{}
+	err := decodeAndValidateRequest(r, &req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	err = handler.App.Usecase.ResetPassword(ctx, req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	WriteSuccess(ctx, w, nil, "success", ResponseMeta{HTTPStatus: http.StatusOK})
+}

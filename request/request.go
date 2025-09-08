@@ -72,3 +72,13 @@ var IsPassword = []validation.Rule{
 	validation.Match(regexp.MustCompile(`[!@#$%^&*()]`)).Error("at least one special character"),
 	validation.Match(regexp.MustCompile(`^[ a-zA-Z0-9!@#$%^&*()?]+$`)).Error("use only allowed special characters: !@#$%^&*()"),
 }
+
+func isEqual(str, field string) validation.RuleFunc {
+	return func(value any) error {
+		s, _ := value.(string)
+		if s != str {
+			return fmt.Errorf("should be equal to %s", field)
+		}
+		return nil
+	}
+}

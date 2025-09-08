@@ -76,6 +76,7 @@ func main() {
 				})
 			})
 			r.Post("/forgot-password", handler.ForgotPassword)
+			r.Post("/reset-password", handler.ResetPassword)
 		})
 
 		// User
