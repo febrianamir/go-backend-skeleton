@@ -63,7 +63,7 @@ type Config struct {
 	MFA_FLAG_TTL                int // In seconds
 	ID_TOKEN_HMAC_KEY           string
 	ACCESS_TOKEN_TTL            int // In seconds
-	REFRESH_ACCESS_TOKEN_TTL    int // In seconds
+	REFRESH_TOKEN_TTL           int // In seconds
 	MFA_ACCESS_TOKEN_TTL        int // In seconds
 	ID_TOKEN_TTL                int // In seconds
 	TOTP_PERIOD                 int // In seconds
@@ -83,7 +83,7 @@ func InitConfig() *Config {
 	sendVerificationDelayTtl := parseIntConfig("SEND_VERIFICATION_DELAY_TTL", 60)
 	mfaFlagTtl := parseIntConfig("MFA_FLAG_TTL", 604800)
 	accessTokenTtl := parseIntConfig("ACCESS_TOKEN_TTL", 86400)
-	refreshTokenTtl := parseIntConfig("REFRESH_ACCESS_TOKEN_TTL", 604800)
+	refreshTokenTtl := parseIntConfig("REFRESH_TOKEN_TTL", 604800)
 	mfaAccessTokenTtl := parseIntConfig("MFA_ACCESS_TOKEN_TTL", 3600)
 	idTokenTtl := parseIntConfig("ID_TOKEN_TTL", 86400)
 	totpPeriod := parseIntConfig("TOTP_PERIOD", 120)
@@ -131,7 +131,7 @@ func InitConfig() *Config {
 		MFA_FLAG_TTL:                mfaFlagTtl,
 		ID_TOKEN_HMAC_KEY:           os.Getenv("ID_TOKEN_HMAC_KEY"),
 		ACCESS_TOKEN_TTL:            accessTokenTtl,
-		REFRESH_ACCESS_TOKEN_TTL:    refreshTokenTtl,
+		REFRESH_TOKEN_TTL:           refreshTokenTtl,
 		MFA_ACCESS_TOKEN_TTL:        mfaAccessTokenTtl,
 		ID_TOKEN_TTL:                idTokenTtl,
 		TOTP_PERIOD:                 totpPeriod,

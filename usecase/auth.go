@@ -241,6 +241,40 @@ func (usecase *Usecase) Login(ctx context.Context, req request.Login) (res respo
 	return response.NewAuth(auth, user, isNeedMfa), nil
 }
 
+func (usecase *Usecase) RefreshSession(ctx context.Context, req request.RefreshSession) (res response.Auth, err error) {
+	auth, err := usecase.repo.GetAuth(ctx, request.GetAuth{
+		RefreshToken: req.RefreshToken,
+	})
+	if err != nil {
+		return res, err
+	}
+	if auth.ID == 0 {
+		return res, lib.ErrorUnauthorized
+	}
+	if time.Now().After(auth.RefreshTokenExpiredAt) {
+		return res, lib.ErrorUnauthorized
+	}
+
+	user, err := usecase.repo.GetUser(ctx, request.GetUser{
+		ID: auth.UserID,
+	})
+	if err != nil {
+		return res, err
+	}
+	if user.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Not Found"
+		return res, notFoundError
+	}
+
+	auth, err = usecase.generateRefreshAuth(ctx, user, auth)
+	if err != nil {
+		return res, err
+	}
+
+	return response.NewAuth(auth, user, false), nil
+}
+
 func (usecase *Usecase) SendOtp(ctx context.Context, req request.SendOtp) error {
 	if req.Channel == "" {
 		req.Channel = constant.OtpChannelEmail
@@ -508,7 +542,7 @@ func (usecase *Usecase) isNeedMfa(ctx context.Context, userId uint) (bool, error
 }
 
 func (usecase *Usecase) generateAuth(ctx context.Context, user model.User, isNeedMfa bool) (model.UserAuth, bool, error) {
-	accessToken, idToken, accessTokenExp, idTokenExp, err := usecase.generateAuthToken(ctx, user, isNeedMfa)
+	accessToken, refreshToken, idToken, accessTokenExp, refreshTokenExp, idTokenExp, err := usecase.generateAuthToken(ctx, user, isNeedMfa)
 	if err != nil {
 		return model.UserAuth{}, false, err
 	}
@@ -522,6 +556,8 @@ func (usecase *Usecase) generateAuth(ctx context.Context, user model.User, isNee
 	}
 
 	if !isNeedMfa {
+		auth.RefreshToken = refreshToken
+		auth.RefreshTokenExpiredAt = refreshTokenExp
 		auth, err = usecase.repo.CreateAuth(ctx, auth)
 		if err != nil {
 			return model.UserAuth{}, false, err
@@ -531,7 +567,29 @@ func (usecase *Usecase) generateAuth(ctx context.Context, user model.User, isNee
 	return auth, isNeedMfa, nil
 }
 
-func (usecase *Usecase) generateAuthToken(ctx context.Context, user model.User, isMfaToken bool) (accessToken, idToken string, accessTokenExp, idTokenExp time.Time, err error) {
+// generateRefreshAuth creates new non-mfa (note: refresh flow bypasses MFA) access, ID, and refresh tokens for an existing user session.
+// It updates the provided auth record with new tokens while preserving the original refresh token expiration.
+// Returns the updated auth record.
+func (usecase *Usecase) generateRefreshAuth(ctx context.Context, user model.User, auth model.UserAuth) (model.UserAuth, error) {
+	accessToken, refreshToken, idToken, accessTokenExp, _, idTokenExp, err := usecase.generateAuthToken(ctx, user, false)
+	if err != nil {
+		return model.UserAuth{}, err
+	}
+
+	auth.AccessToken = accessToken
+	auth.RefreshToken = refreshToken
+	auth.IDToken = idToken
+	auth.AccessTokenExpiredAt = accessTokenExp
+	auth.IDTokenExpiredAt = idTokenExp
+	_, err = usecase.repo.UpdateAuth(ctx, auth)
+	if err != nil {
+		return model.UserAuth{}, err
+	}
+
+	return auth, nil
+}
+
+func (usecase *Usecase) generateAuthToken(ctx context.Context, user model.User, isMfaToken bool) (accessToken, refreshToken, idToken string, accessTokenExp, refreshTokenExp, idTokenExp time.Time, err error) {
 	timeNow := time.Now()
 
 	idTokenExp = timeNow.Add(time.Duration(usecase.config.ID_TOKEN_TTL) * time.Second)
@@ -548,7 +606,7 @@ func (usecase *Usecase) generateAuthToken(ctx context.Context, user model.User, 
 		IsMfaToken: isMfaToken,
 	})
 	if err != nil {
-		return "", "", time.Time{}, time.Time{}, err
+		return "", "", "", time.Time{}, time.Time{}, time.Time{}, err
 	}
 
 	accessTokenTtl := usecase.config.ACCESS_TOKEN_TTL
@@ -563,12 +621,16 @@ func (usecase *Usecase) generateAuthToken(ctx context.Context, user model.User, 
 		IDToken: idToken,
 	})
 	if err != nil {
-		return "", "", time.Time{}, time.Time{}, err
+		return "", "", "", time.Time{}, time.Time{}, time.Time{}, err
 	}
 
-	// TODO: generate refresh token
+	if !isMfaToken {
+		refreshToken := lib.GenerateUUID()
+		refreshTokenExp = timeNow.Add(time.Duration(usecase.config.REFRESH_TOKEN_TTL) * time.Second)
+		return accessToken, refreshToken, idToken, accessTokenExp, refreshTokenExp, idTokenExp, err
+	}
 
-	return accessToken, idToken, accessTokenExp, idTokenExp, err
+	return accessToken, "", idToken, accessTokenExp, time.Time{}, idTokenExp, err
 }
 
 func (usecase *Usecase) generateAccessToken(ctx context.Context, claims auth.AccessTokenClaims) (string, error) {

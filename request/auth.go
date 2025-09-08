@@ -57,6 +57,16 @@ func (r *Login) Validate() error {
 	return buildValidationError(validationErrDetails)
 }
 
+type RefreshSession struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+func (r *RefreshSession) Validate() error {
+	validationErrDetails := map[string]any{}
+	validateField(r.RefreshToken, "refresh_token", validationErrDetails, validation.Required)
+	return buildValidationError(validationErrDetails)
+}
+
 type SendMfaOtp struct {
 	Channel string `json:"channel"`
 }
@@ -103,4 +113,10 @@ func (r *ResetPassword) Validate() error {
 	validateField(r.NewPassword, "new_password", validationErrDetails, IsPassword...)
 	validateField(r.ConfirmNewPassword, "confirm_new_password", validationErrDetails, validation.By(isEqual(r.NewPassword, "password")))
 	return buildValidationError(validationErrDetails)
+}
+
+type GetAuth struct {
+	ID           uint
+	RefreshToken string
+	Preloads     []string
 }

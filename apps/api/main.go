@@ -67,6 +67,7 @@ func main() {
 				r.Post("/verify-account", handler.VerifyAccount)
 			})
 			r.Post("/login", handler.Login)
+			r.Post("/refresh-session", handler.RefreshSession)
 			r.Route("/mfa", func(r chi.Router) {
 				r.Use(handler.AuthMiddleware)
 
