@@ -138,3 +138,22 @@ func (handler *Handler) ValidateMfaOtp(w http.ResponseWriter, r *http.Request) {
 
 	WriteSuccess(ctx, w, res, "success", ResponseMeta{HTTPStatus: http.StatusOK})
 }
+
+func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	req := request.ForgotPassword{}
+	err := decodeAndValidateRequest(r, &req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	err = handler.App.Usecase.ForgotPassword(ctx, req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	WriteSuccess(ctx, w, nil, "success", ResponseMeta{HTTPStatus: http.StatusOK})
+}

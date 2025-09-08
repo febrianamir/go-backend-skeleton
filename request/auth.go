@@ -80,3 +80,13 @@ func (r *ValidateMfaOtp) Validate() error {
 	validateField(r.OtpCode, "otp_code", validationErrDetails, validation.Required)
 	return buildValidationError(validationErrDetails)
 }
+
+type ForgotPassword struct {
+	Email string `json:"email"`
+}
+
+func (r *ForgotPassword) Validate() error {
+	validationErrDetails := map[string]any{}
+	validateField(r.Email, "email", validationErrDetails, validation.Required, is.EmailFormat)
+	return buildValidationError(validationErrDetails)
+}

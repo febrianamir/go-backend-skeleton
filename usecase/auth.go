@@ -110,7 +110,12 @@ func (usecase *Usecase) RegisterResendVerification(ctx context.Context, req requ
 		return verificationDelayError
 	}
 
-	userVerification, err := usecase.repo.GetUserVerification(ctx, request.GetUserVerification{})
+	isUsed := false
+	userVerification, err := usecase.repo.GetUserVerification(ctx, request.GetUserVerification{
+		Type:   model.UserVerificationTypeVerifyAccount,
+		UserID: user.ID,
+		IsUsed: &isUsed,
+	})
 	if err != nil {
 		return err
 	}
@@ -332,6 +337,71 @@ func (usecase *Usecase) ValidateOtp(ctx context.Context, req request.ValidateMfa
 	})
 
 	return response.NewAuth(auth, user, false), nil
+}
+
+func (usecase *Usecase) ForgotPassword(ctx context.Context, req request.ForgotPassword) (err error) {
+	user, err := usecase.repo.GetUser(ctx, request.GetUser{
+		Email: req.Email,
+	})
+	if err != nil {
+		return err
+	}
+	if user.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Not Found"
+		return notFoundError
+	}
+
+	verificationDelayCache, remainingTtl, err := usecase.repo.GetVerificationDelayCacheWithTtl(ctx, user.ID, model.UserVerificationTypeResetPassword)
+	if err != nil {
+		return err
+	}
+	if verificationDelayCache != "" {
+		verificationDelayError := lib.ErrorVerificationDelay
+		verificationDelayError.ErrDetails = map[string]any{
+			"remaining_ttl": remainingTtl / time.Second,
+		}
+		return verificationDelayError
+	}
+
+	isUsed := false
+	userVerification, err := usecase.repo.GetUserVerification(ctx, request.GetUserVerification{
+		Type:   model.UserVerificationTypeResetPassword,
+		UserID: user.ID,
+		IsUsed: &isUsed,
+	})
+	if err != nil {
+		return err
+	}
+	if userVerification.ID == 0 {
+		timeNow := time.Now()
+		userVerification, err = usecase.repo.CreateUserVerification(ctx, model.UserVerification{
+			Type:      model.UserVerificationTypeResetPassword,
+			UserID:    user.ID,
+			Code:      lib.GenerateUUID(),
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return usecase.repo.Transaction(ctx, func(ctx context.Context) error {
+		err = usecase.repo.PublishTask(ctx, constant.TaskTypeEmailSend, request.SendEmailPayload{
+			To:           []string{user.Email},
+			TemplateName: "forgot_password.html",
+			TemplateData: map[string]any{
+				"code": userVerification.Code,
+			},
+			Subject: "Forgot Password",
+		})
+		if err != nil {
+			return err
+		}
+
+		return usecase.repo.SetVerificationDelayCache(ctx, user.ID, model.UserVerificationTypeResetPassword)
+	})
 }
 
 func (usecase *Usecase) GetIDToken(ctx context.Context, accessToken string) (string, error) {

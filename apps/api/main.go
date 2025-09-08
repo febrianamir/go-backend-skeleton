@@ -75,6 +75,7 @@ func main() {
 					r.Post("/validate", handler.ValidateMfaOtp)
 				})
 			})
+			r.Post("/forgot-password", handler.ForgotPassword)
 		})
 
 		// User

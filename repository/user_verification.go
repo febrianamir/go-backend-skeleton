@@ -24,12 +24,24 @@ func (repo *Repository) GetUserVerification(ctx context.Context, req request.Get
 	ctx, tx := repo.prepareDBWithContext(ctx, "GetUserVerification")
 
 	stmt := tx.Model(&model.UserVerification{})
+	if req.Type != "" {
+		stmt = stmt.Where("type = ?", req.Type)
+	}
+
 	if req.UserID > 0 {
 		stmt = stmt.Where("user_id = ?", req.UserID)
 	}
 
 	if req.Code != "" {
 		stmt = stmt.Where("code = ?", req.Code)
+	}
+
+	if req.IsUsed != nil {
+		if *req.IsUsed {
+			stmt = stmt.Where("used_at IS NOT NULL")
+		} else {
+			stmt = stmt.Where("used_at IS NULL")
+		}
 	}
 
 	if len(req.Preloads) > 0 {
