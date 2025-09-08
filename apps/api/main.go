@@ -69,7 +69,7 @@ func main() {
 			r.Post("/login", handler.Login)
 			r.Post("/refresh-session", handler.RefreshSession)
 			r.Route("/mfa", func(r chi.Router) {
-				r.Use(handler.AuthMiddleware)
+				r.Use(handler.AuthMfaMiddleware)
 
 				r.Route("/otp", func(r chi.Router) {
 					r.Post("/send", handler.SendMfaOtp)
@@ -82,6 +82,8 @@ func main() {
 
 		// User
 		r.Route("/users", func(r chi.Router) {
+			r.Use(handler.AuthMiddleware)
+
 			r.Get("/", handler.GetUsers)
 			r.Post("/", handler.CreateUser)
 			r.Get("/{ID}", handler.GetUser)

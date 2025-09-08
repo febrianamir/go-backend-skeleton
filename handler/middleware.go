@@ -114,30 +114,13 @@ func (handler *Handler) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		ctx := request.Context()
 
-		headerAuthorization := request.Header.Get("Authorization")
-		if headerAuthorization == "" {
-			WriteError(ctx, writer, lib.ErrorUnauthorized)
-			return
-		}
-
-		splitToken := strings.Split(headerAuthorization, " ")
-		if len(splitToken) != 2 || splitToken[0] != "Bearer" {
-			WriteError(ctx, writer, lib.ErrorUnauthorized)
-			return
-		}
-
-		// Exchange access_token -> id_token
-		var idToken string
-		var err error
-		accessToken := splitToken[1]
-		idToken, err = handler.App.Usecase.GetIDToken(ctx, accessToken)
-		if err != nil || idToken == "" {
-			WriteError(ctx, writer, lib.ErrorUnauthorized)
-			return
-		}
-
-		idTokenClaim, err := handler.App.Usecase.ParseIDToken(ctx, idToken)
+		idTokenClaim, err := handler.getAndValidateIDToken(ctx, request)
 		if err != nil {
+			WriteError(ctx, writer, err)
+			return
+		}
+
+		if idTokenClaim.IsMfaToken {
 			WriteError(ctx, writer, lib.ErrorUnauthorized)
 			return
 		}
@@ -145,4 +128,47 @@ func (handler *Handler) AuthMiddleware(next http.Handler) http.Handler {
 		ctx = auth.NewFromCtx(ctx, idTokenClaim)
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
+}
+
+func (handler *Handler) AuthMfaMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		ctx := request.Context()
+
+		idTokenClaim, err := handler.getAndValidateIDToken(ctx, request)
+		if err != nil {
+			WriteError(ctx, writer, err)
+			return
+		}
+
+		ctx = auth.NewFromCtx(ctx, idTokenClaim)
+		next.ServeHTTP(writer, request.WithContext(ctx))
+	})
+}
+
+func (handler *Handler) getAndValidateIDToken(ctx context.Context, request *http.Request) (*auth.IDTokenClaims, error) {
+	headerAuthorization := request.Header.Get("Authorization")
+	if headerAuthorization == "" {
+		return nil, lib.ErrorUnauthorized
+	}
+
+	splitToken := strings.Split(headerAuthorization, " ")
+	if len(splitToken) != 2 || splitToken[0] != "Bearer" {
+		return nil, lib.ErrorUnauthorized
+	}
+
+	// Exchange access_token -> id_token
+	var idToken string
+	var err error
+	accessToken := splitToken[1]
+	idToken, err = handler.App.Usecase.GetIDToken(ctx, accessToken)
+	if err != nil || idToken == "" {
+		return nil, lib.ErrorUnauthorized
+	}
+
+	idTokenClaim, err := handler.App.Usecase.ParseIDToken(ctx, idToken)
+	if err != nil {
+		return nil, lib.ErrorUnauthorized
+	}
+
+	return idTokenClaim, nil
 }
