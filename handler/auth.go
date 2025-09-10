@@ -195,3 +195,22 @@ func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	WriteSuccess(ctx, w, nil, "success", ResponseMeta{HTTPStatus: http.StatusOK})
 }
+
+func (handler *Handler) SsoGoogle(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	req := request.SsoGoogle{}
+	err := decodeAndValidateRequest(r, &req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	res, err := handler.App.Usecase.SsoGoogle(ctx, req)
+	if err != nil {
+		WriteError(ctx, w, err)
+		return
+	}
+
+	WriteSuccess(ctx, w, res, "success", ResponseMeta{HTTPStatus: http.StatusOK})
+}

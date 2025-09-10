@@ -115,6 +115,16 @@ func (r *ResetPassword) Validate() error {
 	return buildValidationError(validationErrDetails)
 }
 
+type SsoGoogle struct {
+	IdToken string `json:"id_token"`
+}
+
+func (r *SsoGoogle) Validate() error {
+	validationErrDetails := map[string]any{}
+	validateField(r.IdToken, "id_token", validationErrDetails, validation.Required)
+	return buildValidationError(validationErrDetails)
+}
+
 type GetAuth struct {
 	ID           uint
 	RefreshToken string

@@ -78,6 +78,9 @@ func main() {
 			})
 			r.Post("/forgot-password", handler.ForgotPassword)
 			r.Post("/reset-password", handler.ResetPassword)
+			r.Route("/sso", func(r chi.Router) {
+				r.Post("/google", handler.SsoGoogle)
+			})
 		})
 
 		// User

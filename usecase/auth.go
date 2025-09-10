@@ -16,6 +16,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"google.golang.org/api/idtoken"
 )
 
 func (usecase *Usecase) Register(ctx context.Context, req request.Register) (err error) {
@@ -498,6 +499,52 @@ func (usecase *Usecase) ResetPassword(ctx context.Context, req request.ResetPass
 	})
 }
 
+func (usecase *Usecase) SsoGoogle(ctx context.Context, req request.SsoGoogle) (res response.Auth, err error) {
+	idTokenClaim, err := usecase.verifyGoogleIdToken(ctx, req.IdToken)
+	if err != nil {
+		return res, err
+	}
+
+	user, err := usecase.repo.GetUser(ctx, request.GetUser{
+		Email: idTokenClaim.Claims["email"].(string),
+	})
+	if err != nil {
+		return res, err
+	}
+
+	if user.ID == 0 {
+		// Register
+		err = usecase.repo.Transaction(ctx, func(ctx context.Context) error {
+			timeNow := time.Now()
+			user, err = usecase.repo.CreateUser(ctx, model.User{
+				Name:       idTokenClaim.Claims["name"].(string),
+				Email:      idTokenClaim.Claims["email"].(string),
+				IsActive:   true,
+				IsVerified: true,
+				CreatedAt:  timeNow,
+				UpdatedAt:  timeNow,
+			})
+			return err
+		})
+		if err != nil {
+			return res, err
+		}
+	}
+
+	// Generate auth for register & login
+	isNeedMfa, err := usecase.isNeedMfa(ctx, user.ID)
+	if err != nil {
+		return res, err
+	}
+
+	auth, _, err := usecase.generateAuth(ctx, user, isNeedMfa)
+	if err != nil {
+		return res, err
+	}
+
+	return response.NewAuth(auth, user, isNeedMfa), nil
+}
+
 func (usecase *Usecase) GetIDToken(ctx context.Context, accessToken string) (string, error) {
 	accessTokenClaims, err := usecase.repo.GetAccessToken(ctx, accessToken)
 	if err != nil {
@@ -731,4 +778,8 @@ func (usecase *Usecase) updateSendOtpRateLimit(ctx context.Context, identifier u
 	}
 
 	return nil
+}
+
+func (usecase *Usecase) verifyGoogleIdToken(ctx context.Context, idToken string) (*idtoken.Payload, error) {
+	return idtoken.Validate(ctx, idToken, "")
 }
