@@ -1,9 +1,6 @@
 package handler
 
 import (
-	"app/lib"
-	"app/lib/auth"
-	"app/lib/logger"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -12,7 +9,12 @@ import (
 	"net/http"
 	"strings"
 
+	"app/lib"
+	"app/lib/auth"
+	"app/lib/logger"
+
 	"github.com/felixge/httpsnoop"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -57,7 +59,7 @@ func (handler *Handler) InstrumentMiddleware(next http.Handler) http.Handler {
 		var reqBodyForm string
 
 		if request.Method != http.MethodGet {
-			var body, _ = io.ReadAll(request.Body)
+			body, _ := io.ReadAll(request.Body)
 			request.Body = io.NopCloser(bytes.NewBuffer(body))
 			reqBody := string(body)
 			reqBodyIsForm := strings.Contains(reqBody, "=")
@@ -67,7 +69,7 @@ func (handler *Handler) InstrumentMiddleware(next http.Handler) http.Handler {
 
 				err := request.ParseMultipartForm(maxUploadSize)
 				if err == nil {
-					var reqBodyFormMap = map[string]any{}
+					reqBodyFormMap := map[string]any{}
 					for key, values := range request.MultipartForm.Value {
 						for _, value := range values {
 							reqBodyFormMap[key] = value
@@ -145,6 +147,54 @@ func (handler *Handler) AuthMfaMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func (handler *Handler) WebSocketAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		ctx := request.Context()
+
+		// Two authentication method for websocket:
+		// - API Key - for server to server connection
+		// - Access Token - for frontend to server connection
+		apiKey := request.URL.Query().Get("api_key")
+		accessToken := request.URL.Query().Get("token")
+
+		if apiKey == "" && accessToken == "" {
+			WriteError(ctx, writer, lib.ErrorUnauthorized)
+			return
+		}
+
+		if apiKey != "" {
+			if !handler.App.Usecase.ValidateWebsocketAPIKey(ctx, apiKey) {
+				WriteError(ctx, writer, lib.ErrorUnauthorized)
+				return
+			}
+
+			idTokenClaim := &auth.IDTokenClaims{
+				RegisteredClaims: jwt.RegisteredClaims{
+					Subject: "server",
+				},
+			}
+			ctx = auth.NewFromCtx(ctx, idTokenClaim)
+		}
+
+		if accessToken != "" {
+			idTokenClaim, err := handler.validateIDToken(ctx, accessToken)
+			if err != nil {
+				WriteError(ctx, writer, err)
+				return
+			}
+
+			if idTokenClaim.IsMfaToken {
+				WriteError(ctx, writer, lib.ErrorUnauthorized)
+				return
+			}
+
+			ctx = auth.NewFromCtx(ctx, idTokenClaim)
+		}
+
+		next.ServeHTTP(writer, request.WithContext(ctx))
+	})
+}
+
 func (handler *Handler) getAndValidateIDToken(ctx context.Context, request *http.Request) (*auth.IDTokenClaims, error) {
 	headerAuthorization := request.Header.Get("Authorization")
 	if headerAuthorization == "" {
@@ -157,10 +207,17 @@ func (handler *Handler) getAndValidateIDToken(ctx context.Context, request *http
 	}
 
 	// Exchange access_token -> id_token
-	var idToken string
-	var err error
 	accessToken := splitToken[1]
-	idToken, err = handler.App.Usecase.GetIDToken(ctx, accessToken)
+	idTokenClaim, err := handler.validateIDToken(ctx, accessToken)
+	if err != nil {
+		return nil, lib.ErrorUnauthorized
+	}
+
+	return idTokenClaim, nil
+}
+
+func (handler *Handler) validateIDToken(ctx context.Context, accessToken string) (*auth.IDTokenClaims, error) {
+	idToken, err := handler.App.Usecase.GetIDToken(ctx, accessToken)
 	if err != nil || idToken == "" {
 		return nil, lib.ErrorUnauthorized
 	}

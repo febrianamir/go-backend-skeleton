@@ -553,6 +553,10 @@ func (usecase *Usecase) GetIDToken(ctx context.Context, accessToken string) (str
 	return accessTokenClaims.IDToken, err
 }
 
+func (usecase *Usecase) ValidateWebsocketAPIKey(ctx context.Context, apiKey string) bool {
+	return apiKey == usecase.config.WEBSOCKET_API_KEY
+}
+
 func (usecase *Usecase) ParseIDToken(ctx context.Context, idToken string) (*auth.IDTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(idToken, &auth.IDTokenClaims{}, func(token *jwt.Token) (any, error) {
 		return []byte(usecase.config.ID_TOKEN_HMAC_KEY), nil
