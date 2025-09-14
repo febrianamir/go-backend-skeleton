@@ -41,6 +41,7 @@ func main() {
 
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(constant.TaskTypeEmailSend, worker.WorkerSendEmail)
+	mux.HandleFunc(constant.TaskTypeWebsocketBroadcastMessage, worker.WorkerBroadcastWebsocketMessage)
 
 	if err := server.Run(mux); err != nil {
 		log.Fatalf("consumer server failed to start: %v", err)

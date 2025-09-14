@@ -18,8 +18,11 @@ type Config struct {
 	SERVER_IDLE_TIMEOUT     int // In seconds
 	SERVER_SHUTDOWN_TIMEOUT int // In seconds
 
+	// Websocket Configuration
 	SERVER_WEBSOCKET_PORT             string
 	WEBSOCKET_SERVER_SHUTDOWN_TIMEOUT int // In seconds
+	WEBSOCKET_URL                     string
+	WEBSOCKET_API_KEY                 string
 
 	// Database Configuration
 	DB_USER     string
@@ -73,8 +76,6 @@ type Config struct {
 	SEND_OTP_MAX_RATE_LIMIT     int
 	SEND_OTP_MAX_RATE_LIMIT_TTL int // In seconds
 	SEND_OTP_DELAY_TTL          int // In seconds
-
-	WEBSOCKET_API_KEY string
 }
 
 func InitConfig() *Config {
@@ -83,7 +84,7 @@ func InitConfig() *Config {
 	serverReadTimeout := parseIntConfig("SERVER_READ_TIMEOUT", 30)
 	serverIdleTimeout := parseIntConfig("SERVER_IDLE_TIMEOUT", 30)
 	serverShutdownTimeout := parseIntConfig("SERVER_SHUTDOWN_TIMEOUT", 30)
-	websocketServerShutdownTimeout := parseIntConfig("SERVER_SHUTDOWN_TIMEOUT", 30)
+	websocketServerShutdownTimeout := parseIntConfig("WEBSOCKET_SERVER_SHUTDOWN_TIMEOUT", 30)
 	smtpPort := parseIntConfig("SMTP_PORT", 0)
 	minioSsl := parseBoolConfig("MINIO_SSL")
 	sendVerificationDelayTtl := parseIntConfig("SEND_VERIFICATION_DELAY_TTL", 60)
@@ -107,6 +108,8 @@ func InitConfig() *Config {
 		SERVER_SHUTDOWN_TIMEOUT:           serverShutdownTimeout,
 		SERVER_WEBSOCKET_PORT:             os.Getenv("SERVER_WEBSOCKET_PORT"),
 		WEBSOCKET_SERVER_SHUTDOWN_TIMEOUT: websocketServerShutdownTimeout,
+		WEBSOCKET_URL:                     os.Getenv("WEBSOCKET_URL"),
+		WEBSOCKET_API_KEY:                 os.Getenv("WEBSOCKET_API_KEY"),
 		SMTP_HOST:                         os.Getenv("SMTP_HOST"),
 		SMTP_PORT:                         smtpPort,
 		SMTP_PASSWORD:                     os.Getenv("SMTP_PASSWORD"),
@@ -146,7 +149,6 @@ func InitConfig() *Config {
 		SEND_OTP_MAX_RATE_LIMIT:           sendOtpMaxRateLimit,
 		SEND_OTP_MAX_RATE_LIMIT_TTL:       sendOtpMaxRateLimitTtl,
 		SEND_OTP_DELAY_TTL:                sendOtpDelayTtl,
-		WEBSOCKET_API_KEY:                 os.Getenv("WEBSOCKET_API_KEY"),
 	}
 }
 

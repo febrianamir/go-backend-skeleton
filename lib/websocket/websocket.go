@@ -7,22 +7,21 @@ import (
 	"net/http"
 	"time"
 
-	"app"
 	"app/lib/auth"
 
 	"github.com/coder/websocket"
 )
 
 type Websocket struct {
-	App *app.App
+	Hub *Hub
 }
 
-func NewWebsocket(a *app.App) *Websocket {
-	return &Websocket{App: a}
+func NewWebsocket() *Websocket {
+	return &Websocket{Hub: NewHub()}
 }
 
 // WebSocket handler
-func (ws *Websocket) HandleWebSocket(h *Hub, w http.ResponseWriter, r *http.Request) {
+func (ws *Websocket) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	idTokenClaims := auth.GetAuthFromCtx(r.Context())
 	if idTokenClaims.Subject == "" {
 		log.Printf("Failed to authenticate user")
@@ -31,8 +30,8 @@ func (ws *Websocket) HandleWebSocket(h *Hub, w http.ResponseWriter, r *http.Requ
 
 	// Accept WebSocket connection
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		InsecureSkipVerify: true, // For development only, set to false in production
-		// OriginPatterns:     []string{"*"}, // Allow all origins for testing
+		InsecureSkipVerify: true,          // For development only, set to false in production
+		OriginPatterns:     []string{"*"}, // Allow all origins for testing
 	})
 	if err != nil {
 		log.Printf("Failed to accept WebSocket connection: %v", err)
@@ -46,7 +45,7 @@ func (ws *Websocket) HandleWebSocket(h *Hub, w http.ResponseWriter, r *http.Requ
 	client := &Client{
 		conn:   conn,
 		send:   make(chan Message, 256),
-		hub:    h,
+		hub:    ws.Hub,
 		id:     fmt.Sprintf("client-%d-%s", time.Now().UnixNano(), idTokenClaims.Subject),
 		userId: idTokenClaims.UserID,
 		ctx:    ctx,

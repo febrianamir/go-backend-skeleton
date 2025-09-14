@@ -1,5 +1,6 @@
 package constant
 
 const (
-	TaskTypeEmailSend = "email:send"
+	TaskTypeEmailSend                 = "email:send"
+	TaskTypeWebsocketBroadcastMessage = "websocket:broadcast-message"
 )

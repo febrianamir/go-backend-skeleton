@@ -79,7 +79,6 @@ func (h *Hub) BroadcastNotification(title, message, level string) {
 		Notification: &Notification{
 			Title:   title,
 			Message: message,
-			Level:   level,
 		},
 		Timestamp: time.Now(),
 	}

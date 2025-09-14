@@ -2,6 +2,10 @@ package websocket
 
 import "time"
 
+var (
+	MessageTypeNotification = "NOTIFICATION"
+)
+
 // Message represents a message
 type Message struct {
 	MessageType  string        `json:"message_type"`
@@ -14,5 +18,4 @@ type Notification struct {
 	NotificationType string `json:"notification_type"`
 	Title            string `json:"title"`
 	Message          string `json:"message"`
-	Level            string `json:"level"`
 }

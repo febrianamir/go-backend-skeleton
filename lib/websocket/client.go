@@ -2,7 +2,9 @@ package websocket
 
 import (
 	"context"
+	"encoding/json"
 	"log"
+	"strings"
 
 	"github.com/coder/websocket"
 )
@@ -65,24 +67,22 @@ func (c *Client) readPump() {
 
 		log.Printf("Received message from client %s: %s", c.id, string(message))
 
-		// Create parse and broadcast message here...
-		// var msg Message
-		// if err := json.Unmarshal(message, &msg); err == nil {
-		// 	// Broadcast message here...
-		// 	msg.Timestamp = time.Now()
-		// 	if msg.MessageType == "" {
-		// 		msg.MessageType = "notification"
-		// 		// Populate the rest of the message here...
-		// 	}
-		//
-		// 	c.hub.broadcast <- msg
-		// 	select {
-		// 	case c.hub.broadcast <- msg:
-		// 	default:
-		// 		log.Printf("Failed to broadcast message to client %s", c.id)
-		// 	}
-		// } else {
-		// 	log.Printf("Failed to parse message: %s\n", err.Error())
-		// }
+		// Parse and broadcast message
+		clientIdSplits := strings.Split(c.id, "-")
+		if len(clientIdSplits) == 3 && clientIdSplits[2] == "server" {
+			// Parse and broadcast message from server to server connection
+			var msg Message
+			if err := json.Unmarshal(message, &msg); err == nil {
+				select {
+				case c.hub.broadcast <- msg:
+				default:
+					log.Printf("Failed to broadcast message to client %s", c.id)
+				}
+			} else {
+				log.Printf("Failed to parse message: %s\n", err.Error())
+			}
+		}
+
+		// Write parse and broadcast message from frontend to server connection here...
 	}
 }

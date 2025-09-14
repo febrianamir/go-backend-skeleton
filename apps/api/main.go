@@ -52,6 +52,7 @@ func main() {
 		// Test
 		r.Route("/tests", func(r chi.Router) {
 			r.Post("/send-email", handler.TestSendEmail)
+			r.Post("/send-notification", handler.TestSendNotification)
 		})
 
 		// File

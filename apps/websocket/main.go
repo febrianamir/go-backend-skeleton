@@ -46,11 +46,9 @@ func main() {
 	app := app.NewApp(cfg, db, mailer, storage, cache, publisher)
 	handler := handler.NewHandler(app)
 
-	// Create and start the hub
-	hub := websocket.NewHub()
-	go hub.Run()
-
-	ws := websocket.NewWebsocket(app)
+	// Create and start websocket hub
+	ws := websocket.NewWebsocket()
+	go ws.Hub.Run()
 
 	// Set up HTTP routes
 	router := chi.NewRouter()
@@ -58,7 +56,7 @@ func main() {
 	// WebSocket routes with authentication
 	router.Route("/ws", func(r chi.Router) {
 		r.With(handler.WebSocketAuthMiddleware).Get("/", func(w http.ResponseWriter, r *http.Request) {
-			ws.HandleWebSocket(hub, w, r)
+			ws.HandleWebSocket(w, r)
 		})
 	})
 

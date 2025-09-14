@@ -2,6 +2,7 @@ package worker
 
 import (
 	"app/lib/logger"
+	"app/lib/websocket"
 	"app/request"
 	"context"
 	"encoding/json"
@@ -36,6 +37,35 @@ func (w *Worker) WorkerSendEmail(ctx context.Context, t *asynq.Task) error {
 
 	logger.LogInfo(ctx, "success process task", []zap.Field{
 		zap.Strings("tags", []string{"worker", "WorkerSendEmail"}),
+	}...)
+	return nil
+}
+
+func (w *Worker) WorkerBroadcastWebsocketMessage(ctx context.Context, t *asynq.Task) error {
+	ctx = context.WithValue(ctx, logger.CtxProcessID, t.ResultWriter().TaskID())
+	defer recoverWorkerPanic(ctx)
+
+	logger.LogInfo(ctx, "start process task", []zap.Field{
+		zap.Any("payload", string(t.Payload())),
+		zap.Strings("tags", []string{"worker", "WorkerBroadcastWebsocketMessage"}),
+	}...)
+
+	var p websocket.Message
+	if err := json.Unmarshal(t.Payload(), &p); err != nil {
+		logger.LogError(ctx, "json unmarshal error", []zap.Field{
+			zap.Error(err),
+			zap.Strings("tags", []string{"worker", "WorkerBroadcastWebsocketMessage"}),
+		}...)
+		return err
+	}
+
+	err := w.App.Usecase.BroadcastWebsocketMessage(ctx, p)
+	if err != nil {
+		return err
+	}
+
+	logger.LogInfo(ctx, "success process task", []zap.Field{
+		zap.Strings("tags", []string{"worker", "WorkerBroadcastWebsocketMessage"}),
 	}...)
 	return nil
 }
