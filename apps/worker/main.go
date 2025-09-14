@@ -34,8 +34,9 @@ func main() {
 	if err != nil {
 		log.Fatal("failed connect to publisher: ", err)
 	}
+	wsPool := cfg.NewWebsocketPool(20)
 
-	app := app.NewApp(cfg, db, mailer, storage, cache, publisher)
+	app := app.NewApp(cfg, db, mailer, storage, cache, publisher, wsPool)
 	worker := worker.NewWorker(app)
 	server := cfg.NewConsumer()
 

@@ -17,7 +17,9 @@ type Websocket struct {
 }
 
 func NewWebsocket() *Websocket {
-	return &Websocket{Hub: NewHub()}
+	return &Websocket{
+		Hub: NewHub(),
+	}
 }
 
 // WebSocket handler

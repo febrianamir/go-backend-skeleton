@@ -41,7 +41,7 @@ func main() {
 		log.Fatal("failed connect to publisher: ", err)
 	}
 
-	app := app.NewApp(cfg, db, mailer, storage, cache, publisher)
+	app := app.NewApp(cfg, db, mailer, storage, cache, publisher, nil)
 	handler := handler.NewHandler(app)
 	router := chi.NewRouter()
 

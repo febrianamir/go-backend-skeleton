@@ -7,6 +7,7 @@ import (
 	"app/lib/logger"
 	"app/lib/mailer"
 	"app/lib/task"
+	"app/lib/websocket"
 	"context"
 )
 
@@ -18,15 +19,17 @@ type Repository struct {
 	mailer    *mailer.SMTP
 	publisher *task.Publisher
 	cache     *cache.Cache
+	wsPool    *websocket.WebsocketPool
 }
 
-func NewRepository(config *config.Config, db *lib.Database, mailer *mailer.SMTP, publisher *task.Publisher, cache *cache.Cache) Repository {
+func NewRepository(config *config.Config, db *lib.Database, mailer *mailer.SMTP, publisher *task.Publisher, cache *cache.Cache, wsPool *websocket.WebsocketPool) Repository {
 	return Repository{
 		config:    config,
 		db:        db,
 		mailer:    mailer,
 		publisher: publisher,
 		cache:     cache,
+		wsPool:    wsPool,
 	}
 }
 
