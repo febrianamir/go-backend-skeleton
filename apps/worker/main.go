@@ -1,11 +1,12 @@
 package main
 
 import (
+	"log"
+
 	"app"
 	"app/config"
 	"app/lib/constant"
 	"app/worker"
-	"log"
 
 	"github.com/hibiken/asynq"
 	"github.com/joho/godotenv"
@@ -41,8 +42,8 @@ func main() {
 	server := cfg.NewConsumer()
 
 	mux := asynq.NewServeMux()
-	mux.HandleFunc(constant.TaskTypeEmailSend, worker.WorkerSendEmail)
-	mux.HandleFunc(constant.TaskTypeWebsocketBroadcastMessage, worker.WorkerBroadcastWebsocketMessage)
+	worker.RegisterWorker(mux, constant.TaskTypeEmailSend, "WorkerSendEmail", worker.WorkerSendEmail)
+	worker.RegisterWorker(mux, constant.TaskTypeWebsocketBroadcastMessage, "WorkerBroadcastWebsocketMessage", worker.WorkerBroadcastWebsocketMessage)
 
 	if err := server.Run(mux); err != nil {
 		log.Fatalf("consumer server failed to start: %v", err)
