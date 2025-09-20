@@ -46,9 +46,11 @@ func main() {
 	signoz, _ := cfg.NewSignoz()
 	defer func() {
 		err := signoz.Shutdown(context.Background())
-		logger.LogError(context.Background(), "failed to shutdown signoz provider", []zap.Field{
-			zap.Error(err),
-		}...)
+		if err != nil {
+			logger.LogError(context.Background(), "failed to shutdown signoz provider", []zap.Field{
+				zap.Error(err),
+			}...)
+		}
 	}()
 
 	app := app.NewApp(cfg, db, mailer, storage, cache, publisher, nil)
