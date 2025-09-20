@@ -76,6 +76,12 @@ type Config struct {
 	SEND_OTP_MAX_RATE_LIMIT     int
 	SEND_OTP_MAX_RATE_LIMIT_TTL int // In seconds
 	SEND_OTP_DELAY_TTL          int // In seconds
+
+	// Signoz Configuration
+	SIGNOZ_URL               string
+	SIGNOZ_SERVICE_NAME      string
+	SIGNOZ_SERVICE_NAMESPACE string
+	SIGNOZ_TRACE_SAMPLE_RATE float64
 }
 
 func InitConfig() *Config {
@@ -97,6 +103,7 @@ func InitConfig() *Config {
 	sendOtpMaxRateLimit := parseIntConfig("SEND_OTP_MAX_RATE_LIMIT", 3)
 	sendOtpMaxRateLimitTtl := parseIntConfig("SEND_OTP_MAX_RATE_LIMIT_TTL", 3600)
 	sendOtpDelayTtl := parseIntConfig("SEND_OTP_DELAY_TTL", 120)
+	signozTraceSampleRate := parseFloatConfig("SIGNOZ_TRACE_SAMPLE_RATE", 120)
 
 	return &Config{
 		ENV:                               os.Getenv("ENV"),
@@ -149,6 +156,10 @@ func InitConfig() *Config {
 		SEND_OTP_MAX_RATE_LIMIT:           sendOtpMaxRateLimit,
 		SEND_OTP_MAX_RATE_LIMIT_TTL:       sendOtpMaxRateLimitTtl,
 		SEND_OTP_DELAY_TTL:                sendOtpDelayTtl,
+		SIGNOZ_URL:                        os.Getenv("SIGNOZ_URL"),
+		SIGNOZ_SERVICE_NAME:               os.Getenv("SIGNOZ_SERVICE_NAME"),
+		SIGNOZ_SERVICE_NAMESPACE:          os.Getenv("SIGNOZ_SERVICE_NAMESPACE"),
+		SIGNOZ_TRACE_SAMPLE_RATE:          signozTraceSampleRate,
 	}
 }
 
@@ -160,6 +171,18 @@ func parseIntConfig(envName string, defaultValue int) int {
 			log.Fatalf("failed parsing config: %s", envName)
 		}
 		return envValueInt
+	}
+	return defaultValue
+}
+
+func parseFloatConfig(envName string, defaultValue float64) float64 {
+	envValue := os.Getenv(envName)
+	if envValue != "" {
+		envValueFloat, err := strconv.ParseFloat(envValue, 64)
+		if err != nil {
+			log.Fatalf("failed parsing config: %s", envName)
+		}
+		return envValueFloat
 	}
 	return defaultValue
 }

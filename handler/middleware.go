@@ -7,15 +7,20 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"app/lib"
 	"app/lib/auth"
 	"app/lib/logger"
+	"app/lib/signoz"
 
 	"github.com/felixge/httpsnoop"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -84,13 +89,42 @@ func (handler *Handler) InstrumentMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
+		ctx, span := signoz.StartSpan(request.Context(), fmt.Sprintf("[%s] %s", request.Method, generateTransactionNameFromURLPath(request.URL.Path)))
+		defer span.Finish()
+
 		reqID := request.Header.Get(string(logger.CtxRequestID))
+		if reqID == "" {
+			reqID = span.TraceID()
+		}
 		if reqID == "" {
 			reqID = uuid.NewString()
 		}
 
-		ctx := context.WithValue(request.Context(), logger.CtxRequestID, reqID)
+		ctx = context.WithValue(request.Context(), logger.CtxRequestID, reqID)
 		m := httpsnoop.CaptureMetrics(handler.PanicMiddleware(next), writer, request.WithContext(ctx))
+
+		var signozSpan trace.Span = *span.SignozSpan
+
+		if signozSpan != nil {
+			signozSpan.SetAttributes(attribute.String("path", request.URL.Path))
+			signozSpan.SetAttributes(attribute.String("duration", fmt.Sprintf("%d ms", m.Duration.Milliseconds())))
+			signozSpan.SetAttributes(attribute.String("method", request.Method))
+			signozSpan.SetAttributes(attribute.Int("status", m.Code))
+			signozSpan.SetAttributes(attribute.String("user_agent", request.UserAgent()))
+			signozSpan.SetAttributes(attribute.String("request_body", reqBodyJson))
+			signozSpan.SetAttributes(attribute.String("request_form", reqBodyForm))
+			signozSpan.SetAttributes(attribute.String("host", request.Host))
+
+			var code codes.Code = codes.Unset
+
+			if m.Code == 500 {
+				code = codes.Error
+			} else {
+				code = codes.Ok
+			}
+
+			signozSpan.SetStatus(code, fmt.Sprintf("http handler with status: %d", m.Code))
+		}
 
 		logger.LogInfo(ctx, fmt.Sprintf("http handler ([%s] - %s) completed", request.Method, request.URL.Path), []zap.Field{
 			zap.Int("status_code", m.Code),
@@ -228,4 +262,24 @@ func (handler *Handler) validateIDToken(ctx context.Context, accessToken string)
 	}
 
 	return idTokenClaim, nil
+}
+
+func generateTransactionNameFromURLPath(s string) string {
+	parts := strings.Split(s, "/")
+	result := "home"
+
+	if len(parts) > 1 {
+		result = parts[1]
+	}
+
+	if len(parts) > 2 {
+		for i, part := range parts {
+			var onlyText = regexp.MustCompile(`^[A-Za-z\s]+$`)
+			if i > 1 && onlyText.MatchString(part) {
+				result = result + "/" + part
+			}
+		}
+	}
+
+	return result
 }

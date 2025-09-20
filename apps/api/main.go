@@ -4,6 +4,7 @@ import (
 	"app"
 	"app/config"
 	"app/handler"
+	"app/lib/logger"
 	"context"
 	"fmt"
 	"log"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 var cfg *config.Config
@@ -40,6 +42,14 @@ func main() {
 	if err != nil {
 		log.Fatal("failed connect to publisher: ", err)
 	}
+
+	signoz, _ := cfg.NewSignoz()
+	defer func() {
+		err := signoz.Shutdown(context.Background())
+		logger.LogError(context.Background(), "failed to shutdown signoz provider", []zap.Field{
+			zap.Error(err),
+		}...)
+	}()
 
 	app := app.NewApp(cfg, db, mailer, storage, cache, publisher, nil)
 	handler := handler.NewHandler(app)
