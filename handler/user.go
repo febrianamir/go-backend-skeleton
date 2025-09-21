@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"app/lib/signoz"
 	"app/request"
 	"net/http"
 )
 
 func (handler *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.GetUsers")
+	defer span.Finish()
 
 	req := request.GetUsers{}
 	extractor := URLQueryExtractor{Request: r}
@@ -35,7 +37,8 @@ func (handler *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.GetUser")
+	defer span.Finish()
 
 	req := request.GetUser{}
 	id, err := getParamUint(r, "ID")
@@ -55,7 +58,8 @@ func (handler *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.GetUser")
+	defer span.Finish()
 
 	req := request.CreateUser{}
 	err := decodeAndValidateRequest(r, &req)
@@ -74,7 +78,8 @@ func (handler *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.UpdateUser")
+	defer span.Finish()
 
 	req := request.UpdateUser{}
 	err := decodeAndValidateRequest(r, &req)
@@ -100,7 +105,8 @@ func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.DeleteUser")
+	defer span.Finish()
 
 	req := request.DeleteUser{}
 	id, err := getParamUint(r, "ID")

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"app/lib/signoz"
 	"app/lib/websocket"
 	"app/request"
 
@@ -11,6 +12,9 @@ import (
 )
 
 func (w *Worker) WorkerSendEmail(ctx context.Context, t *asynq.Task) error {
+	ctx, span := signoz.StartSpan(ctx, "usecase.WorkerSendEmail")
+	defer span.Finish()
+
 	var p request.SendEmailPayload
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		return err
@@ -25,6 +29,9 @@ func (w *Worker) WorkerSendEmail(ctx context.Context, t *asynq.Task) error {
 }
 
 func (w *Worker) WorkerBroadcastWebsocketMessage(ctx context.Context, t *asynq.Task) error {
+	ctx, span := signoz.StartSpan(ctx, "usecase.WorkerBroadcastWebsocketMessage")
+	defer span.Finish()
+
 	var p websocket.Message
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		return err

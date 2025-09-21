@@ -5,6 +5,7 @@ import (
 	"app/lib/auth"
 	"app/lib/constant"
 	"app/lib/logger"
+	"app/lib/signoz"
 	"app/model"
 	"app/request"
 	"app/response"
@@ -20,6 +21,9 @@ import (
 )
 
 func (usecase *Usecase) Register(ctx context.Context, req request.Register) (err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.Register")
+	defer span.Finish()
+
 	checkUserEmail, err := usecase.repo.GetUser(ctx, request.GetUser{
 		Email: req.Email,
 	})
@@ -87,6 +91,9 @@ func (usecase *Usecase) Register(ctx context.Context, req request.Register) (err
 }
 
 func (usecase *Usecase) RegisterResendVerification(ctx context.Context, req request.RegisterResendVerification) (err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.RegisterResendVerification")
+	defer span.Finish()
+
 	user, err := usecase.repo.GetUser(ctx, request.GetUser{
 		Email: req.Email,
 	})
@@ -144,6 +151,9 @@ func (usecase *Usecase) RegisterResendVerification(ctx context.Context, req requ
 }
 
 func (usecase *Usecase) VerifyAccount(ctx context.Context, req request.VerifyAccount) (response.Auth, error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.VerifyAccount")
+	defer span.Finish()
+
 	userVerification, err := usecase.repo.GetUserVerification(ctx, request.GetUserVerification{
 		Code: req.Code,
 	})
@@ -212,6 +222,9 @@ func (usecase *Usecase) VerifyAccount(ctx context.Context, req request.VerifyAcc
 }
 
 func (usecase *Usecase) Login(ctx context.Context, req request.Login) (res response.Auth, err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.Login")
+	defer span.Finish()
+
 	user, err := usecase.repo.GetUser(ctx, request.GetUser{
 		Email: req.Email,
 	})
@@ -243,6 +256,9 @@ func (usecase *Usecase) Login(ctx context.Context, req request.Login) (res respo
 }
 
 func (usecase *Usecase) RefreshSession(ctx context.Context, req request.RefreshSession) (res response.Auth, err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.RefreshSession")
+	defer span.Finish()
+
 	auth, err := usecase.repo.GetAuth(ctx, request.GetAuth{
 		RefreshToken: req.RefreshToken,
 	})
@@ -277,6 +293,9 @@ func (usecase *Usecase) RefreshSession(ctx context.Context, req request.RefreshS
 }
 
 func (usecase *Usecase) SendOtp(ctx context.Context, req request.SendOtp) error {
+	ctx, span := signoz.StartSpan(ctx, "usecase.SendOtp")
+	defer span.Finish()
+
 	if req.Channel == "" {
 		req.Channel = constant.OtpChannelEmail
 	}
@@ -337,6 +356,9 @@ func (usecase *Usecase) SendOtp(ctx context.Context, req request.SendOtp) error 
 }
 
 func (usecase *Usecase) ValidateOtp(ctx context.Context, req request.ValidateMfaOtp) (response.Auth, error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.ValidateOtp")
+	defer span.Finish()
+
 	user, err := usecase.repo.GetUser(ctx, request.GetUser{
 		ID: req.UserId,
 	})
@@ -375,6 +397,9 @@ func (usecase *Usecase) ValidateOtp(ctx context.Context, req request.ValidateMfa
 }
 
 func (usecase *Usecase) ForgotPassword(ctx context.Context, req request.ForgotPassword) (err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.ForgotPassword")
+	defer span.Finish()
+
 	user, err := usecase.repo.GetUser(ctx, request.GetUser{
 		Email: req.Email,
 	})
@@ -440,6 +465,9 @@ func (usecase *Usecase) ForgotPassword(ctx context.Context, req request.ForgotPa
 }
 
 func (usecase *Usecase) ResetPassword(ctx context.Context, req request.ResetPassword) (err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.ResetPassword")
+	defer span.Finish()
+
 	userVerification, err := usecase.repo.GetUserVerification(ctx, request.GetUserVerification{
 		Code: req.Code,
 	})
@@ -500,6 +528,9 @@ func (usecase *Usecase) ResetPassword(ctx context.Context, req request.ResetPass
 }
 
 func (usecase *Usecase) SsoGoogle(ctx context.Context, req request.SsoGoogle) (res response.Auth, err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.SsoGoogle")
+	defer span.Finish()
+
 	idTokenClaim, err := usecase.verifyGoogleIdToken(ctx, req.IdToken)
 	if err != nil {
 		return res, err

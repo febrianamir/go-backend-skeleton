@@ -10,7 +10,8 @@ import (
 )
 
 func (repo *Repository) CreateAuth(ctx context.Context, auth model.UserAuth) (model.UserAuth, error) {
-	ctx, tx := repo.prepareDBWithContext(ctx, "CreateAuth")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "CreateAuth")
+	defer span.Finish()
 
 	err := tx.Create(&auth).Error
 	if err != nil {
@@ -21,7 +22,8 @@ func (repo *Repository) CreateAuth(ctx context.Context, auth model.UserAuth) (mo
 }
 
 func (repo *Repository) GetAuth(ctx context.Context, req request.GetAuth) (res model.UserAuth, err error) {
-	ctx, tx := repo.prepareDBWithContext(ctx, "GetAuth")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "GetAuth")
+	defer span.Finish()
 
 	stmt := tx.Model(&model.UserAuth{})
 	if req.ID > 0 {
@@ -47,7 +49,8 @@ func (repo *Repository) GetAuth(ctx context.Context, req request.GetAuth) (res m
 }
 
 func (repo *Repository) UpdateAuth(ctx context.Context, auth model.UserAuth) (model.UserAuth, error) {
-	ctx, tx := repo.prepareDBWithContext(ctx, "UpdateAuth")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "UpdateAuth")
+	defer span.Finish()
 
 	err := tx.Save(&auth).Error
 	if err != nil {

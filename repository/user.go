@@ -11,7 +11,8 @@ import (
 )
 
 func (repo *Repository) GetUsers(ctx context.Context, req request.GetUsers) (res []model.User, total int64, err error) {
-	ctx, tx := repo.prepareDBWithContext(ctx, "GetUsers")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "GetUsers")
+	defer span.Finish()
 
 	stmt := tx.Model(&model.User{})
 	if req.Search != "" {
@@ -51,7 +52,8 @@ func (repo *Repository) GetUsers(ctx context.Context, req request.GetUsers) (res
 }
 
 func (repo *Repository) GetUser(ctx context.Context, req request.GetUser) (res model.User, err error) {
-	ctx, tx := repo.prepareDBWithContext(ctx, "GetUser")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "GetUser")
+	defer span.Finish()
 
 	stmt := tx.Model(&model.User{})
 	if req.ID > 0 {
@@ -81,7 +83,8 @@ func (repo *Repository) GetUser(ctx context.Context, req request.GetUser) (res m
 }
 
 func (repo *Repository) CreateUser(ctx context.Context, user model.User) (model.User, error) {
-	ctx, tx := repo.prepareDBWithContext(ctx, "CreateUser")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "CreateUser")
+	defer span.Finish()
 
 	err := tx.Create(&user).Error
 	if err != nil {
@@ -92,7 +95,8 @@ func (repo *Repository) CreateUser(ctx context.Context, user model.User) (model.
 }
 
 func (repo *Repository) UpdateUser(ctx context.Context, user model.User) (model.User, error) {
-	ctx, tx := repo.prepareDBWithContext(ctx, "UpdateUser")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "UpdateUser")
+	defer span.Finish()
 
 	err := tx.Save(&user).Error
 	if err != nil {
@@ -103,7 +107,8 @@ func (repo *Repository) UpdateUser(ctx context.Context, user model.User) (model.
 }
 
 func (repo *Repository) DeleteUser(ctx context.Context, id uint) error {
-	ctx, tx := repo.prepareDBWithContext(ctx, "DeleteUser")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "DeleteUser")
+	defer span.Finish()
 
 	var user model.User
 	err := tx.Delete(&user, id).Error

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"app/lib"
+	"app/lib/signoz"
 	"app/request"
 	"app/response"
 	"context"
@@ -9,6 +10,9 @@ import (
 )
 
 func (usecase *Usecase) UploadFile(ctx context.Context, req request.UploadFile) (res response.UploadFile, err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.UploadFile")
+	defer span.Finish()
+
 	newFilename := fmt.Sprintf("%s.%s", lib.GenerateUUID(), req.FileExtension)
 	filepath := fmt.Sprintf("%s/%s", req.TargetPath, newFilename)
 

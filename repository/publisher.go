@@ -2,6 +2,7 @@ package repository
 
 import (
 	"app/lib/logger"
+	"app/lib/signoz"
 	"context"
 	"encoding/json"
 
@@ -11,6 +12,9 @@ import (
 
 // PublishTask create new asynq task and publish it
 func (repo *Repository) PublishTask(ctx context.Context, taskType string, payload any) error {
+	ctx, span := signoz.StartSpan(ctx, "repository.PublishTask")
+	defer span.Finish()
+
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		logger.LogError(ctx, "failed marshal payload", []zap.Field{

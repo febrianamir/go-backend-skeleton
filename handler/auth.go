@@ -3,12 +3,14 @@ package handler
 import (
 	"app/lib"
 	"app/lib/auth"
+	"app/lib/signoz"
 	"app/request"
 	"net/http"
 )
 
 func (handler *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.Register")
+	defer span.Finish()
 
 	req := request.Register{}
 	err := decodeAndValidateRequest(r, &req)
@@ -27,7 +29,8 @@ func (handler *Handler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) RegisterResendVerification(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.RegisterResendVerification")
+	defer span.Finish()
 
 	req := request.RegisterResendVerification{}
 	err := decodeAndValidateRequest(r, &req)
@@ -46,7 +49,8 @@ func (handler *Handler) RegisterResendVerification(w http.ResponseWriter, r *htt
 }
 
 func (handler *Handler) VerifyAccount(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.VerifyAccount")
+	defer span.Finish()
 
 	req := request.VerifyAccount{}
 	err := decodeAndValidateRequest(r, &req)
@@ -65,7 +69,8 @@ func (handler *Handler) VerifyAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.Login")
+	defer span.Finish()
 
 	req := request.Login{}
 	err := decodeAndValidateRequest(r, &req)
@@ -84,7 +89,8 @@ func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.RefreshSession")
+	defer span.Finish()
 
 	req := request.RefreshSession{}
 	err := decodeAndValidateRequest(r, &req)
@@ -103,7 +109,8 @@ func (handler *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) SendMfaOtp(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.SendMfaOtp")
+	defer span.Finish()
 
 	idTokenClaims := auth.GetAuthFromCtx(ctx)
 	if idTokenClaims.UserID == 0 {
@@ -131,7 +138,8 @@ func (handler *Handler) SendMfaOtp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) ValidateMfaOtp(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.ValidateMfaOtp")
+	defer span.Finish()
 
 	idTokenClaims := auth.GetAuthFromCtx(ctx)
 	if idTokenClaims.UserID == 0 {
@@ -159,7 +167,8 @@ func (handler *Handler) ValidateMfaOtp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.ForgotPassword")
+	defer span.Finish()
 
 	req := request.ForgotPassword{}
 	err := decodeAndValidateRequest(r, &req)
@@ -178,7 +187,8 @@ func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.ResetPassword")
+	defer span.Finish()
 
 	req := request.ResetPassword{}
 	err := decodeAndValidateRequest(r, &req)
@@ -197,7 +207,8 @@ func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) SsoGoogle(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.SsoGoogle")
+	defer span.Finish()
 
 	req := request.SsoGoogle{}
 	err := decodeAndValidateRequest(r, &req)

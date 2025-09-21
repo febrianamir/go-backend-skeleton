@@ -3,6 +3,7 @@ package usecase
 import (
 	"app/lib"
 	"app/lib/logger"
+	"app/lib/signoz"
 	"app/model"
 	"app/request"
 	"app/response"
@@ -13,6 +14,9 @@ import (
 )
 
 func (usecase *Usecase) GetUsers(ctx context.Context, req request.GetUsers) (res response.GetUsers, err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.GetUsers")
+	defer span.Finish()
+
 	users, total, err := usecase.repo.GetUsers(ctx, req)
 	if err != nil {
 		return res, err
@@ -27,6 +31,9 @@ func (usecase *Usecase) GetUsers(ctx context.Context, req request.GetUsers) (res
 }
 
 func (usecase *Usecase) GetUser(ctx context.Context, req request.GetUser) (res response.UserDetailed, err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.GetUser")
+	defer span.Finish()
+
 	user, err := usecase.repo.GetUser(ctx, req)
 	if err != nil {
 		return res, err
@@ -41,6 +48,9 @@ func (usecase *Usecase) GetUser(ctx context.Context, req request.GetUser) (res r
 }
 
 func (usecase *Usecase) CreateUser(ctx context.Context, req request.CreateUser) (err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.CreateUser")
+	defer span.Finish()
+
 	checkUserEmail, err := usecase.repo.GetUser(ctx, request.GetUser{
 		Email: req.Email,
 	})
@@ -79,6 +89,9 @@ func (usecase *Usecase) CreateUser(ctx context.Context, req request.CreateUser) 
 }
 
 func (usecase *Usecase) UpdateUser(ctx context.Context, req request.UpdateUser) (err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.UpdateUser")
+	defer span.Finish()
+
 	user, err := usecase.repo.GetUser(ctx, request.GetUser{
 		ID: req.ID,
 	})
@@ -117,5 +130,8 @@ func (usecase *Usecase) UpdateUser(ctx context.Context, req request.UpdateUser) 
 }
 
 func (usecase *Usecase) DeleteUser(ctx context.Context, req request.DeleteUser) (err error) {
+	ctx, span := signoz.StartSpan(ctx, "usecase.DeleteUser")
+	defer span.Finish()
+
 	return usecase.repo.DeleteUser(ctx, req.ID)
 }

@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"app/lib/signoz"
 	"app/request"
 	"net/http"
 )
 
 func (handler *Handler) TestSendEmail(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.TestSendEmail")
+	defer span.Finish()
 
 	req := request.TestSendEmail{}
 	err := decodeAndValidateRequest(r, &req)
@@ -25,7 +27,8 @@ func (handler *Handler) TestSendEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) TestSendNotification(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.TestSendNotification")
+	defer span.Finish()
 
 	req := request.TestSendNotification{}
 	err := decodeAndValidateRequest(r, &req)

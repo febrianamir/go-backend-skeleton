@@ -2,6 +2,7 @@ package repository
 
 import (
 	"app/lib/logger"
+	"app/lib/signoz"
 	"app/model"
 	"context"
 	"errors"
@@ -11,6 +12,9 @@ import (
 )
 
 func (repo *Repository) GetAppSettingByName(ctx context.Context, name string) (model.AppSetting, error) {
+	ctx, span := signoz.StartSpan(ctx, "repository.GetAppSettingByName")
+	defer span.Finish()
+
 	var appSetting model.AppSetting
 	err := repo.db.Where("name = ?", name).First(&appSetting).Error
 	if err != nil {
@@ -33,6 +37,9 @@ func (repo *Repository) GetAppSettingByName(ctx context.Context, name string) (m
 }
 
 func (repo *Repository) GetAppSettingBySlug(ctx context.Context, slug string) (model.AppSetting, error) {
+	ctx, span := signoz.StartSpan(ctx, "repository.GetAppSettingBySlug")
+	defer span.Finish()
+
 	var appSetting model.AppSetting
 	err := repo.db.Where("slug = ?", slug).First(&appSetting).Error
 	if err != nil {

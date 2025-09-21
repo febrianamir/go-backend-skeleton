@@ -2,13 +2,15 @@ package handler
 
 import (
 	"app/lib/constant"
+	"app/lib/signoz"
 	"app/request"
 	"net/http"
 	"strings"
 )
 
 func (handler *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := signoz.StartSpan(r.Context(), "handler.UploadFile")
+	defer span.Finish()
 
 	req := request.UploadFile{}
 	targetPath := strings.ToLower(r.FormValue("path"))

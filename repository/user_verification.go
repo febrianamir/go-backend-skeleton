@@ -10,7 +10,8 @@ import (
 )
 
 func (repo *Repository) CreateUserVerification(ctx context.Context, userVerification model.UserVerification) (model.UserVerification, error) {
-	ctx, tx := repo.prepareDBWithContext(ctx, "CreateUserVerification")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "CreateUserVerification")
+	defer span.Finish()
 
 	err := tx.Create(&userVerification).Error
 	if err != nil {
@@ -21,7 +22,8 @@ func (repo *Repository) CreateUserVerification(ctx context.Context, userVerifica
 }
 
 func (repo *Repository) GetUserVerification(ctx context.Context, req request.GetUserVerification) (res model.UserVerification, err error) {
-	ctx, tx := repo.prepareDBWithContext(ctx, "GetUserVerification")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "GetUserVerification")
+	defer span.Finish()
 
 	stmt := tx.Model(&model.UserVerification{})
 	if req.Type != "" {
@@ -59,7 +61,8 @@ func (repo *Repository) GetUserVerification(ctx context.Context, req request.Get
 }
 
 func (repo *Repository) UpdateUserVerification(ctx context.Context, userVerification model.UserVerification) (model.UserVerification, error) {
-	ctx, tx := repo.prepareDBWithContext(ctx, "UpdateUserVerification")
+	ctx, span, tx := repo.prepareRepoContext(ctx, "UpdateUserVerification")
+	defer span.Finish()
 
 	err := tx.Save(&userVerification).Error
 	if err != nil {
