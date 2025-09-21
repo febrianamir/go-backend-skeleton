@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/hibiken/asynq"
+	"github.com/hibiken/asynqmon"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
@@ -57,9 +59,26 @@ func main() {
 	handler := handler.NewHandler(app)
 	router := chi.NewRouter()
 
+	// Asynq Monitoring
+	asynqMon := asynqmon.New(asynqmon.Options{
+		RootPath: "/monitoring/tasks",
+		RedisConnOpt: asynq.RedisClientOpt{
+			Addr:     fmt.Sprintf("%s:%s", cfg.REDIS_HOST, cfg.REDIS_PORT),
+			Password: cfg.REDIS_PASSWORD,
+			DB:       1,
+		},
+	})
+
 	router.Get("/healthz", handler.Healthz)
 	router.Group(func(r chi.Router) {
 		r.Use(handler.InstrumentMiddleware)
+
+		// Monitoring
+		r.Route("/monitoring", func(r chi.Router) {
+			r.Use(handler.BasicAuthMiddleware)
+
+			r.Mount("/tasks", asynqMon)
+		})
 
 		// Test
 		r.Route("/tests", func(r chi.Router) {

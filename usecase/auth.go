@@ -527,6 +527,28 @@ func (usecase *Usecase) ResetPassword(ctx context.Context, req request.ResetPass
 	})
 }
 
+func (usecase *Usecase) BasicAuth(ctx context.Context, req request.BasicAuth) (isAuthenticated bool, err error) {
+	user, err := usecase.repo.GetUser(ctx, request.GetUser{
+		Email: req.Email,
+	})
+	if err != nil {
+		return false, err
+	}
+	if user.ID == 0 {
+		notFoundError := lib.ErrorNotFound
+		notFoundError.Message = "User Not Found"
+		return false, notFoundError
+	}
+
+	err = lib.CompareHashAndPassword(user.EncryptedPassword, req.Password)
+	if err != nil {
+		return false, lib.ErrorWrongCredential
+	}
+
+	isAuthenticated = true
+	return isAuthenticated, nil
+}
+
 func (usecase *Usecase) SsoGoogle(ctx context.Context, req request.SsoGoogle) (res response.Auth, err error) {
 	ctx, span := signoz.StartSpan(ctx, "usecase.SsoGoogle")
 	defer span.Finish()

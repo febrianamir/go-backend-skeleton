@@ -14,6 +14,7 @@ import (
 	"app/lib/auth"
 	"app/lib/logger"
 	"app/lib/signoz"
+	"app/request"
 
 	"github.com/felixge/httpsnoop"
 	"github.com/golang-jwt/jwt/v5"
@@ -226,6 +227,29 @@ func (handler *Handler) WebSocketAuthMiddleware(next http.Handler) http.Handler 
 		}
 
 		next.ServeHTTP(writer, request.WithContext(ctx))
+	})
+}
+
+func (h *Handler) BasicAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		username, password, ok := r.BasicAuth()
+		if !ok {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Asynq Monitoring"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		isAuthenticated, err := h.App.Usecase.BasicAuth(r.Context(), request.BasicAuth{
+			Email:    username,
+			Password: password,
+		})
+		if err != nil || !isAuthenticated {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Asynq Monitoring"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }
 

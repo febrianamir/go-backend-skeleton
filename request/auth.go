@@ -130,3 +130,8 @@ type GetAuth struct {
 	RefreshToken string
 	Preloads     []string
 }
+
+type BasicAuth struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
