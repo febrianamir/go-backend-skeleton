@@ -63,7 +63,7 @@ func (handler *Handler) InstrumentMiddleware(next http.Handler) http.Handler {
 		var reqBodyJson string
 		var reqBodyForm string
 
-		if request.Method != http.MethodGet {
+		if request.Method != http.MethodGet && !isAuthPath(request.URL.Path) {
 			body, _ := io.ReadAll(request.Body)
 			request.Body = io.NopCloser(bytes.NewBuffer(body))
 			reqBody := string(body)
@@ -282,4 +282,22 @@ func generateTransactionNameFromURLPath(s string) string {
 	}
 
 	return result
+}
+
+func isAuthPath(urlPath string) bool {
+	authPaths := []string{
+		"registration",
+		"register",
+		"login",
+		"password",
+		"auth",
+	}
+
+	for _, ap := range authPaths {
+		if strings.Contains(urlPath, ap) {
+			return true
+		}
+	}
+
+	return false
 }
