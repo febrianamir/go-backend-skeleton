@@ -42,8 +42,8 @@ func main() {
 	server := cfg.NewConsumer()
 
 	mux := asynq.NewServeMux()
-	worker.RegisterWorker(mux, constant.TaskTypeEmailSend, "WorkerSendEmail", worker.WorkerSendEmail)
-	worker.RegisterWorker(mux, constant.TaskTypeWebsocketBroadcastMessage, "WorkerBroadcastWebsocketMessage", worker.WorkerBroadcastWebsocketMessage)
+	worker.RegisterWorker(mux, constant.TaskTypeEmailSend, "WorkerSendEmail", false, worker.WorkerSendEmail)
+	worker.RegisterWorker(mux, constant.TaskTypeWebsocketBroadcastMessage, "WorkerBroadcastWebsocketMessage", false, worker.WorkerBroadcastWebsocketMessage)
 
 	if err := server.Run(mux); err != nil {
 		log.Fatalf("consumer server failed to start: %v", err)
