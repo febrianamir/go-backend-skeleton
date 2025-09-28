@@ -85,40 +85,20 @@ type Config struct {
 }
 
 func InitConfig() *Config {
-	debugMode := parseBoolConfig("DEBUG_MODE")
-	serverWriteTimeout := parseIntConfig("SERVER_WRITE_TIMEOUT", 30)
-	serverReadTimeout := parseIntConfig("SERVER_READ_TIMEOUT", 30)
-	serverIdleTimeout := parseIntConfig("SERVER_IDLE_TIMEOUT", 30)
-	serverShutdownTimeout := parseIntConfig("SERVER_SHUTDOWN_TIMEOUT", 30)
-	websocketServerShutdownTimeout := parseIntConfig("WEBSOCKET_SERVER_SHUTDOWN_TIMEOUT", 30)
-	smtpPort := parseIntConfig("SMTP_PORT", 0)
-	minioSsl := parseBoolConfig("MINIO_SSL")
-	sendVerificationDelayTtl := parseIntConfig("SEND_VERIFICATION_DELAY_TTL", 60)
-	mfaFlagTtl := parseIntConfig("MFA_FLAG_TTL", 604800)
-	accessTokenTtl := parseIntConfig("ACCESS_TOKEN_TTL", 86400)
-	refreshTokenTtl := parseIntConfig("REFRESH_TOKEN_TTL", 604800)
-	mfaAccessTokenTtl := parseIntConfig("MFA_ACCESS_TOKEN_TTL", 3600)
-	idTokenTtl := parseIntConfig("ID_TOKEN_TTL", 86400)
-	totpPeriod := parseIntConfig("TOTP_PERIOD", 120)
-	sendOtpMaxRateLimit := parseIntConfig("SEND_OTP_MAX_RATE_LIMIT", 3)
-	sendOtpMaxRateLimitTtl := parseIntConfig("SEND_OTP_MAX_RATE_LIMIT_TTL", 3600)
-	sendOtpDelayTtl := parseIntConfig("SEND_OTP_DELAY_TTL", 120)
-	signozTraceSampleRate := parseFloatConfig("SIGNOZ_TRACE_SAMPLE_RATE", 120)
-
 	return &Config{
 		ENV:                               os.Getenv("ENV"),
-		DEBUG_MODE:                        debugMode,
+		DEBUG_MODE:                        parseBoolConfig("DEBUG_MODE"),
 		SERVER_PORT:                       os.Getenv("SERVER_PORT"),
-		SERVER_WRITE_TIMEOUT:              serverWriteTimeout,
-		SERVER_READ_TIMEOUT:               serverReadTimeout,
-		SERVER_IDLE_TIMEOUT:               serverIdleTimeout,
-		SERVER_SHUTDOWN_TIMEOUT:           serverShutdownTimeout,
+		SERVER_WRITE_TIMEOUT:              parseIntConfig("SERVER_WRITE_TIMEOUT", 30),
+		SERVER_READ_TIMEOUT:               parseIntConfig("SERVER_READ_TIMEOUT", 30),
+		SERVER_IDLE_TIMEOUT:               parseIntConfig("SERVER_IDLE_TIMEOUT", 30),
+		SERVER_SHUTDOWN_TIMEOUT:           parseIntConfig("SERVER_SHUTDOWN_TIMEOUT", 30),
 		SERVER_WEBSOCKET_PORT:             os.Getenv("SERVER_WEBSOCKET_PORT"),
-		WEBSOCKET_SERVER_SHUTDOWN_TIMEOUT: websocketServerShutdownTimeout,
+		WEBSOCKET_SERVER_SHUTDOWN_TIMEOUT: parseIntConfig("WEBSOCKET_SERVER_SHUTDOWN_TIMEOUT", 30),
 		WEBSOCKET_URL:                     os.Getenv("WEBSOCKET_URL"),
 		WEBSOCKET_API_KEY:                 os.Getenv("WEBSOCKET_API_KEY"),
 		SMTP_HOST:                         os.Getenv("SMTP_HOST"),
-		SMTP_PORT:                         smtpPort,
+		SMTP_PORT:                         parseIntConfig("SMTP_PORT", 0),
 		SMTP_PASSWORD:                     os.Getenv("SMTP_PASSWORD"),
 		SMTP_USERNAME:                     os.Getenv("SMTP_USERNAME"),
 		SMTP_SENDER:                       os.Getenv("SMTP_SENDER"),
@@ -140,26 +120,26 @@ func InitConfig() *Config {
 		MINIO_ENDPOINT:                    os.Getenv("MINIO_ENDPOINT"),
 		MINIO_USERNAME:                    os.Getenv("MINIO_USERNAME"),
 		MINIO_PASSWORD:                    os.Getenv("MINIO_PASSWORD"),
-		MINIO_SSL:                         minioSsl,
+		MINIO_SSL:                         parseBoolConfig("MINIO_SSL"),
 		REDIS_HOST:                        os.Getenv("REDIS_HOST"),
 		REDIS_PORT:                        os.Getenv("REDIS_PORT"),
 		REDIS_PASSWORD:                    os.Getenv("REDIS_PASSWORD"),
 		LOG_PATH:                          os.Getenv("LOG_PATH"),
-		SEND_VERIFICATION_DELAY_TTL:       sendVerificationDelayTtl,
-		MFA_FLAG_TTL:                      mfaFlagTtl,
+		SEND_VERIFICATION_DELAY_TTL:       parseIntConfig("SEND_VERIFICATION_DELAY_TTL", 60),
+		MFA_FLAG_TTL:                      parseIntConfig("MFA_FLAG_TTL", 604800),
 		ID_TOKEN_HMAC_KEY:                 os.Getenv("ID_TOKEN_HMAC_KEY"),
-		ACCESS_TOKEN_TTL:                  accessTokenTtl,
-		REFRESH_TOKEN_TTL:                 refreshTokenTtl,
-		MFA_ACCESS_TOKEN_TTL:              mfaAccessTokenTtl,
-		ID_TOKEN_TTL:                      idTokenTtl,
-		TOTP_PERIOD:                       totpPeriod,
-		SEND_OTP_MAX_RATE_LIMIT:           sendOtpMaxRateLimit,
-		SEND_OTP_MAX_RATE_LIMIT_TTL:       sendOtpMaxRateLimitTtl,
-		SEND_OTP_DELAY_TTL:                sendOtpDelayTtl,
+		ACCESS_TOKEN_TTL:                  parseIntConfig("ACCESS_TOKEN_TTL", 86400),
+		REFRESH_TOKEN_TTL:                 parseIntConfig("REFRESH_TOKEN_TTL", 604800),
+		MFA_ACCESS_TOKEN_TTL:              parseIntConfig("MFA_ACCESS_TOKEN_TTL", 3600),
+		ID_TOKEN_TTL:                      parseIntConfig("ID_TOKEN_TTL", 86400),
+		TOTP_PERIOD:                       parseIntConfig("TOTP_PERIOD", 120),
+		SEND_OTP_MAX_RATE_LIMIT:           parseIntConfig("SEND_OTP_MAX_RATE_LIMIT", 3),
+		SEND_OTP_MAX_RATE_LIMIT_TTL:       parseIntConfig("SEND_OTP_MAX_RATE_LIMIT_TTL", 3600),
+		SEND_OTP_DELAY_TTL:                parseIntConfig("SEND_OTP_DELAY_TTL", 120),
 		SIGNOZ_URL:                        os.Getenv("SIGNOZ_URL"),
 		SIGNOZ_SERVICE_NAME:               os.Getenv("SIGNOZ_SERVICE_NAME"),
 		SIGNOZ_SERVICE_NAMESPACE:          os.Getenv("SIGNOZ_SERVICE_NAMESPACE"),
-		SIGNOZ_TRACE_SAMPLE_RATE:          signozTraceSampleRate,
+		SIGNOZ_TRACE_SAMPLE_RATE:          parseFloatConfig("SIGNOZ_TRACE_SAMPLE_RATE", 120),
 	}
 }
 
